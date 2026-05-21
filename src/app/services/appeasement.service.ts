@@ -5,8 +5,8 @@ import { Code } from '../models/code';
 
 @Injectable({ providedIn: 'root' })
 export class AppeasementService {
-  private readonly API_URL = 'https://my.cxperts.us/api/endpoints';
-  //private readonly API_URL = 'http://localhost/endpoints';
+  //private readonly API_URL = 'https://my.cxperts.us/api/endpoints';
+  private readonly API_URL = 'http://localhost/endpoints';
   private readonly GRAPH_URL = 'https://graph.microsoft.com/v1.0/me/photo/$value';
 
   constructor(private http: HttpClient) {}
@@ -68,4 +68,48 @@ export class AppeasementService {
         catchError(() => of(null))
       );
   }
+
+  /** ===============================
+ *  🔹 BIMI Metrics
+ *  =============================== */
+
+getBimiMetrics(): Observable<any[]> {
+
+  return this.http
+    .get<any>(`${this.API_URL}/getMetricSnapshotsBIMI.php`)
+    .pipe(
+
+      map(res => {
+
+        if (!res.success) {
+          throw new Error('BIMI metrics not found');
+        }
+
+        return res.data || [];
+
+      }),
+
+      catchError(err => {
+
+        console.error('BIMI API error', err);
+
+        return of([]);
+
+      })
+
+    );
+
+}
+
+// =========================================================
+// LIVE ZENDESK TICKETS
+// =========================================================
+
+getLiveZendeskTickets(payload: any): Observable<any> {
+
+  return this.http.post<any>(
+    `${this.API_URL}/liveTickets.php`,
+    payload
+  );
+}
 }

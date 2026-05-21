@@ -5,6 +5,7 @@ import { Team } from './team/team';
 import { AppeasementAgent } from './appeasement-agent/appeasement-agent';
 import { LoginComponent } from './login/login';
 import { AuthGuards } from './guards/authGuards';
+import { Bimi } from './bimi/bimi';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -17,6 +18,7 @@ export const routes: Routes = [
       { path: 'team', component: Team },
       { path: 'requests', component: Requests },
       { path: 'appeasement/codes', component: AppeasementAgent },
+      { path: 'bimi', component: Bimi },
       { path: '', redirectTo: 'appeasement/codes', pathMatch: 'full' }
     ]
   },

@@ -1,0 +1,300 @@
+<div class="section">
+
+    <h3 class="agent-title">
+        BIMI Dashboard
+    </h3>
+
+    <div class="agent-underline"></div>
+
+    <!-- GLOBAL BAR -->
+    <div class="global-bar">
+
+        <div class="global-pagination">
+
+            <button class="page-btn" (click)="previousLobPage()">‹</button>
+
+            <span class="page-indicator">
+                {{ currentLobPage + 1 }} / {{ totalLobPages() }}
+            </span>
+
+            <button class="page-btn" (click)="nextLobPage()">›</button>
+
+        </div>
+
+        <!-- TIMEZONE TOGGLE SWITCH -->
+        <div class="timezone-toggle">
+
+            <span class="tz-label">
+                {{ timezone }}
+            </span>
+
+            <label class="switch">
+                <input type="checkbox" (change)="toggleTimezone()" [checked]="timezone === 'ET'">
+                <span class="slider"></span>
+            </label>
+
+        </div>
+
+    </div>
+
+
+    <!-- LOADING -->
+    <div class="profile-surface" *ngIf="loading">
+        <div class="cx-card-loading">
+
+            <div class="loader-orbit">
+
+                <div class="orbit orbit-1"></div>
+                <div class="orbit orbit-2"></div>
+                <div class="orbit orbit-3"></div>
+
+                <div class="loader-center">
+                    cx
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div *ngIf="!loading">
+        <!-- CLIENT -->
+        <div class="profile-surface" *ngIf="getCurrentClient() as client">
+
+            <div class="client-header">
+
+                <div>
+
+                    <div class="client-name">
+                        {{ client.name }}
+                    </div>
+
+                    <div class="client-code">
+                        {{ client.code }}
+                    </div>
+
+                </div>
+
+                <div class="metric-pagination">
+
+                    <button class="page-btn" (click)="previousMetric(client)">
+                        ‹
+                    </button>
+
+                    <span class="page-indicator">
+                        {{ client.metricPage + 1 }} / {{ client.metrics.length }}
+                    </span>
+
+                    <button class="page-btn" (click)="nextMetric(client)">
+                        ›
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- MAIN -->
+            <div class="main-layout" *ngIf="getCurrentMetric(client) as metric">
+
+                <!-- LEFT -->
+                <div class="chart-section">
+
+<!-- DAILY CARDS -->
+<div class="daily-cards-wrapper">
+
+    <button class="week-btn"
+        (click)="previousWeek(metric)">
+        ‹
+    </button>
+
+    <div class="daily-cards">
+
+        <div class="day-card"
+            *ngFor="let day of getVisibleDays(metric)"
+            (click)="selectDay(metric, day)"
+            [class.active]="metric.selectedDay?.day === day.day">
+
+            <div class="day-title">
+                {{ day.day }}
+            </div>
+
+            <div class="day-volume">
+                {{ day.volume }}
+            </div>
+
+        </div>
+
+    </div>
+
+    <button class="week-btn"
+        (click)="nextWeek(metric)">
+        ›
+    </button>
+
+</div>
+
+                    <div class="metric-title">
+                        {{ metric.name }}
+                    </div>
+
+                    <div class="metric-value">
+                        {{ metric.latestValue }}
+                    </div>
+
+                    <div class="metric-chart">
+                        <ag-charts [options]="metric.chartOptions"></ag-charts>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT -->
+                <div class="side-metrics">
+
+<div class="summary-card clickable"
+     (click)="openTicketModal(client, metric)">
+
+                        <div class="summary-label">
+                            Total Volume
+                        </div>
+
+                        <div class="summary-value">
+                            {{ metric.summaryMetrics.totalVolume }}
+                        </div>
+
+                    </div>
+
+                    <div class="summary-card">
+
+                        <div class="summary-label">
+                            Avg / Interval
+                        </div>
+
+                        <div class="summary-value">
+                            {{ metric.summaryMetrics.avgPerInterval }}
+                        </div>
+
+                    </div>
+
+                    <div class="summary-card">
+
+                        <div class="summary-label">
+                            Peak Volume
+                        </div>
+
+                        <div class="summary-value">
+                            {{ metric.summaryMetrics.maxVolume }}
+                        </div>
+
+                    </div>
+
+                    <div class="summary-card">
+
+                        <div class="summary-label">
+                            Active Intervals
+                        </div>
+
+                        <div class="summary-value">
+                            {{ metric.summaryMetrics.activeIntervals }}
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ===================================================== -->
+<!-- LIVE TICKETS MODAL -->
+<!-- ===================================================== -->
+
+<div class="ticket-modal-overlay"
+     *ngIf="showTicketModal">
+
+  <div class="ticket-modal">
+
+    <div class="ticket-modal-header">
+
+      <div>
+
+        <div class="ticket-modal-title">
+          Live Zendesk Tickets
+        </div>
+
+        <div class="ticket-modal-subtitle">
+          {{ ticketModalTitle }}
+        </div>
+
+      </div>
+
+      <button class="close-btn"
+              (click)="closeTicketModal()">
+        ✕
+      </button>
+
+    </div>
+
+    <!-- LOADING -->
+
+        <div class="cx-card-loading" *ngIf="loadingTickets">
+
+            <div class="loader-orbit">
+
+                <div class="orbit orbit-1"></div>
+                <div class="orbit orbit-2"></div>
+                <div class="orbit orbit-3"></div>
+
+                <div class="loader-center">
+                    cx
+                </div>
+
+            </div>
+        </div>
+
+    <!-- TABLE -->
+
+    <table *ngIf="!loadingTickets">
+
+      <thead>
+
+        <tr>
+          <th>Ticket</th>
+          <th>Status</th>
+          <th>Channel</th>
+          <th>Created</th>
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        <tr *ngFor="let ticket of liveTickets">
+
+          <td>
+
+            <a
+              [href]="'https://cxperts-63539.zendesk.com/agent/tickets/' + ticket.ticketId"
+              target="_blank">
+
+              #{{ ticket.ticketId }}
+
+            </a>
+
+          </td>
+
+          <td>{{ ticket.status }}</td>
+
+          <td>{{ ticket.channel }}</td>
+
+          <td>{{ ticket.createdAt }}</td>
+
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
