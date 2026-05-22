@@ -11,11 +11,42 @@ import { AppeasementService } from '../services/appeasement.service';
   styleUrls: ['./side-bar.css']
 })
 export class SideBar {
+
   constructor(private api: AppeasementService) {}
 
-  logout(): void {
-    if (confirm('Are you sure you want to log out?')) {
-      this.api.logout();
-    }
+  // =========================================================
+  // CURRENT USER
+  // =========================================================
+
+  currentUser: any =
+    JSON.parse(
+      localStorage.getItem('user') || '{}'
+    );
+
+  // =========================================================
+  // HELPERS
+  // =========================================================
+
+  get role(): number {
+    return this.currentUser?.role || 0;
   }
+
+  get username(): string {
+    return this.currentUser?.username || '';
+  }
+
+  get isAdmin(): boolean {
+    return this.role === 1;
+  }
+
+  logout(): void {
+
+    if (confirm('Are you sure you want to log out?')) {
+
+      this.api.logout();
+
+    }
+
+  }
+
 }

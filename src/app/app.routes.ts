@@ -6,6 +6,7 @@ import { AppeasementAgent } from './appeasement-agent/appeasement-agent';
 import { LoginComponent } from './login/login';
 import { AuthGuards } from './guards/authGuards';
 import { Bimi } from './bimi/bimi';
+import { KimcoCases } from './kimco-cases/kimco-cases';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -19,6 +20,7 @@ export const routes: Routes = [
       { path: 'requests', component: Requests },
       { path: 'appeasement/codes', component: AppeasementAgent },
       { path: 'bimi', component: Bimi },
+      { path: 'kimco', component: KimcoCases },      
       { path: '', redirectTo: 'appeasement/codes', pathMatch: 'full' }
     ]
   },

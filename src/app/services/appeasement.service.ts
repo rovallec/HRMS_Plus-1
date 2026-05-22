@@ -5,8 +5,8 @@ import { Code } from '../models/code';
 
 @Injectable({ providedIn: 'root' })
 export class AppeasementService {
-  private readonly API_URL = 'https://my.cxperts.us/api/endpoints';
-  //private readonly API_URL = 'http://localhost/endpoints';
+  //private readonly API_URL = 'https://my.cxperts.us/api/endpoints';
+  private readonly API_URL = 'http://localhost/endpoints';
   private readonly GRAPH_URL = 'https://graph.microsoft.com/v1.0/me/photo/$value';
 
   constructor(private http: HttpClient) {}
@@ -111,5 +111,57 @@ getLiveZendeskTickets(payload: any): Observable<any> {
     `${this.API_URL}/liveTickets.php`,
     payload
   );
+}
+
+// =========================================================
+// KIMCO CASES DASHBOARD
+// =========================================================
+
+getKimcoCasesDashboard(): Observable<any> {
+
+  return this.http
+    .get<any>(
+      `${this.API_URL}/getKimcoCases.php`
+    )
+    .pipe(
+
+      map(res => {
+
+        if (!res.success) {
+          throw new Error(
+            'KIMCO dashboard error'
+          );
+        }
+
+        return res;
+
+      }),
+
+      catchError(err => {
+
+        console.error(
+          'KIMCO dashboard API error',
+          err
+        );
+
+        return of({
+
+          metrics: {
+            total: 0,
+            success: 0,
+            failed: 0,
+            successRate: 0
+          },
+
+          timeline: [],
+
+          cases: []
+
+        });
+
+      })
+
+    );
+
 }
 }

@@ -1,0 +1,225 @@
+<div class="section">
+
+    <!-- ===================================================== -->
+    <!-- TITLE -->
+    <!-- ===================================================== -->
+
+    <h3 class="agent-title">
+        KIMCO SendCases
+    </h3>
+
+    <div class="agent-underline"></div>
+
+    <!-- ===================================================== -->
+    <!-- LOADING -->
+    <!-- ===================================================== -->
+
+    <div class="profile-surface"
+         *ngIf="loading">
+
+        <div class="cx-card-loading">
+
+            <div class="loader-orbit">
+
+                <div class="orbit orbit-1"></div>
+                <div class="orbit orbit-2"></div>
+                <div class="orbit orbit-3"></div>
+
+                <div class="loader-center">
+                    cx
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- CONTENT -->
+    <!-- ===================================================== -->
+
+    <div class="dashboard-layout"
+         *ngIf="!loading">
+
+        <!-- ================================================= -->
+        <!-- TOP -->
+        <!-- ================================================= -->
+
+        <div class="top-grid">
+
+            <!-- LINE -->
+            <div class="chart-card">
+
+                <div class="card-title">
+                    SendCases Over Time
+                </div>
+
+                <div class="chart-wrapper">
+                    <ag-charts
+                        [options]="chartOptions">
+                    </ag-charts>
+                </div>
+
+            </div>
+
+            <!-- PIE -->
+<div class="chart-card pie-card">
+
+    <div class="pie-layout">
+
+        <!-- LEFT -->
+        <div class="pie-info">
+
+            <div class="card-title">
+                Success Rate
+            </div>
+
+            <div class="success-rate">
+                {{ metrics.successRate }}%
+            </div>
+
+            <div class="pie-description">
+
+                <div class="pie-stat success">
+
+                    <span class="dot"></span>
+
+                    Successful:
+                    {{ metrics.success }}
+
+                </div>
+
+                <div class="pie-stat failed">
+
+                    <span class="dot"></span>
+
+                    Failed:
+                    {{ metrics.failed }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div class="pie-chart-container">
+
+            <ag-charts
+                [options]="pieOptions">
+            </ag-charts>
+
+        </div>
+
+    </div>
+
+</div>
+
+        </div>
+
+        <!-- ================================================= -->
+        <!-- TABLE -->
+        <!-- ================================================= -->
+
+        <div class="table-surface">
+
+            <div class="table-header">
+
+                <div>
+                    Latest 100 Cases
+                </div>
+
+                <div class="table-subtitle">
+                    Transmission visibility layer
+                </div>
+
+            </div>
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Ticket ID</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Sent</th>
+                            <th>Retries</th>
+                            <th>KIMCO Status</th>
+                            <th>KIMCO Result</th>
+                            <th>Error</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        <tr *ngFor="let item of cases">
+
+                            <td>
+
+                                <a
+                                  [href]="'https://cxperts-63539.zendesk.com/agent/tickets/' + item.zendesk_ticket_id"
+                                  target="_blank">
+
+                                    #{{ item.zendesk_ticket_id }}
+
+                                </a>
+
+                            </td>
+
+                            <td>
+
+                                <span
+                                  class="status-pill"
+                                  [class.success]="item.send_status === 'SUCCESS'"
+                                  [class.failed]="item.send_status === 'FAILED'">
+
+                                    {{ item.send_status }}
+
+                                </span>
+
+                            </td>
+
+                            <td>
+                                {{ item.created_datetime }}
+                            </td>
+
+                            <td>
+                                {{ item.sent_datetime }}
+                            </td>
+
+                            <td>
+                                {{ item.retry_count }}
+                            </td>
+
+                            <td>
+                                {{ item.kimco_status }}
+                            </td>
+
+                            <td>
+                                {{ item.kimco_result }}
+                            </td>
+
+                            <td class="error-column">
+                                {{ formatError(item.last_error) }}
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
