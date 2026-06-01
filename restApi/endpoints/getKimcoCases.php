@@ -92,8 +92,8 @@ try {
         FROM cases
 
         WHERE
-            CAST(created_datetime AS DATE) =
-            CAST(GETDATE() AS DATE)
+            created_datetime >=
+            DATEADD(DAY, -2, GETDATE())
 
     ";
 
@@ -136,7 +136,7 @@ try {
 
         WHERE
             created_datetime >=
-            DATEADD(day, -1, GETUTCDATE())
+            DATEADD(DAY, -2, GETDATE())
 
         GROUP BY
             FORMAT(
@@ -211,8 +211,8 @@ try {
             ON c.send_job_id = j.id
 
         WHERE
-            CAST(c.created_datetime AS DATE) =
-            CAST(GETDATE() AS DATE)
+            c.created_datetime >=
+            DATEADD(DAY, -2, GETDATE())
 
         ORDER BY
             c.created_datetime DESC
@@ -252,7 +252,9 @@ try {
                             ?? null
 
                 ];
+
             }
+
         }
 
         $cases[] = [

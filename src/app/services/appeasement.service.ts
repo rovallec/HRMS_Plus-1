@@ -69,35 +69,65 @@ export class AppeasementService {
       );
   }
 
-  /** ===============================
- *  🔹 BIMI Metrics
- *  =============================== */
 
-getBimiMetrics(): Observable<any[]> {
+  // =========================================================
+// BIMI LIVE DASHBOARD
+// =========================================================
 
-  return this.http
-    .get<any>(`${this.API_URL}/getMetricSnapshotsBIMI.php`)
-    .pipe(
+getBimiDashboard(
+  brand: string,
+  range: string,
+  timezone: string
+): Observable<any> {
 
-      map(res => {
+  return this.http.post<any>(
 
-        if (!res.success) {
-          throw new Error('BIMI metrics not found');
-        }
+    `${this.API_URL}/getBimiDashboard.php`,
 
-        return res.data || [];
+    {
 
-      }),
+      brand,
 
-      catchError(err => {
+      range,
 
-        console.error('BIMI API error', err);
+      timezone
 
-        return of([]);
+    }
 
-      })
+  ).pipe(
 
-    );
+    map(res => {
+
+      if (!res.success) {
+
+        throw new Error(
+          'BIMI dashboard error'
+        );
+
+      }
+
+      return res;
+
+    }),
+
+    catchError(err => {
+
+      console.error(
+        'BIMI dashboard API error',
+        err
+      );
+
+      return of({
+
+        success: true,
+
+        tickets: []
+
+      });
+
+    })
+
+  );
 
 }
 
@@ -162,6 +192,24 @@ getKimcoCasesDashboard(): Observable<any> {
       })
 
     );
+
+}
+
+// =========================================================
+// MARC JACOBS OMS
+// =========================================================
+
+lookupMjOrder(orderNumber: string): Observable<any> {
+
+  return this.http.post<any>(
+
+    `${this.API_URL}/getOrderMJMM.php`,
+
+    {
+      orderNumber
+    }
+
+  );
 
 }
 }

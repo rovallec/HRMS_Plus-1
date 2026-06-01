@@ -1,22 +1,30 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { AgCharts } from 'ag-charts-angular';
-import { AppeasementService } from '../services/appeasement.service';
+import {
+  Component,
+  OnInit
+} from '@angular/core';
 
 import {
-  ModuleRegistry,
-  AllCommunityModule
-} from 'ag-charts-community';
+  CommonModule
+} from '@angular/common';
 
-ModuleRegistry.registerModules([
-  AllCommunityModule
-]);
+import {
+  FormsModule
+} from '@angular/forms';
+
+import {
+  AgCharts
+} from 'ag-charts-angular';
+
+import {
+  AppeasementService
+} from '../services/appeasement.service';
 
 @Component({
   selector: 'app-bimi',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     AgCharts
   ],
   templateUrl: './bimi.html',
@@ -24,662 +32,891 @@ ModuleRegistry.registerModules([
 })
 export class Bimi implements OnInit {
 
-  constructor(private api: AppeasementService) { }
+  constructor(
+    private api: AppeasementService
+  ) { }
 
   // =========================================================
-  // STATE
+  // FILTERS
   // =========================================================
 
-  currentLobPage = 0;
-  clients: any[] = [];
+  selectedBrand = 'haggar';
 
-  timezone: 'UTC' | 'ET' = 'UTC';
-
-  loading:boolean = false;
-
-  showTicketModal = false;
-
-  loadingTickets = false;
-
-  liveTickets: any[] = [];
-
-  ticketModalTitle = '';
-  // =========================================================
-  // INIT
-  // =========================================================
-
-  ngOnInit(): void {
-    this.loadMetrics();
-  }
+  selectedRange = 'this_week';
 
   // =========================================================
   // TIMEZONE
   // =========================================================
 
-toggleTimezone() {
+  timezone:
+    'UTC'
+    | 'EST'
+    | 'EDT' = 'UTC';
 
-  this.loading = true;
+  // =========================================================
+  // DROPDOWNS
+  // =========================================================
 
-  setTimeout(() => {
+  brands = [
 
-    this.timezone =
-      this.timezone === 'UTC'
-        ? 'ET'
-        : 'UTC';
+    {
+      label: 'Haggar',
+      value: 'haggar'
+    },
 
-    // reload everything
-    this.loadMetrics();
+    {
+      label: 'Cole Haan',
+      value: 'colehaan'
+    },
 
-  }, 50);
+    {
+      label: 'Kimco',
+      value: 'kimco'
+    },
 
-}
-
-  private convertTime(date: Date): Date {
-    if (this.timezone === 'ET') {
-      return new Date(date.getTime() - 5 * 60 * 60 * 1000);
+    {
+      label: 'Marc Jacobs',
+      value: 'marcjacobs'
     }
-    return date;
-  }
+
+  ];
+
+  ranges = [
+
+    {
+      label: 'Today',
+      value: 'today'
+    },
+
+    {
+      label: 'Yesterday',
+      value: 'yesterday'
+    },
+
+    {
+      label: 'This Week',
+      value: 'this_week'
+    },
+
+    {
+      label: 'Last Week',
+      value: 'last_week'
+    },
+
+    {
+      label: 'Two Weeks Ago',
+      value: 'two_weeks_ago'
+    },
+
+    {
+      label: 'Three Weeks Ago',
+      value: 'three_weeks_ago'
+    },
+
+    {
+      label: 'Four Weeks Ago',
+      value: 'four_weeks_ago'
+    },
+
+    {
+      label: 'Five Weeks Ago',
+      value: 'five_weeks_ago'
+    }
+
+  ];
 
   // =========================================================
-  // HELPERS
+  // STATE
   // =========================================================
 
-  private isBacklogMetric(metricName: string): boolean {
-    const name = (metricName || '').toLowerCase();
-    return name.includes('backlog');
+  loading = false;
+
+  tickets: any[] = [];
+
+  totalOpened = 0;
+
+  totalClosed = 0;
+
+  overviewChart: any;
+
+  phoneCreatedChart: any;
+
+  chatCreatedChart: any;
+
+  emailCreatedChart: any;
+
+  phoneCloseChart: any;
+
+  chatCloseChart: any;
+
+  emailCloseChart: any;
+
+  // =========================================================
+  // VIEW MODES
+  // =========================================================
+
+  viewModes: any = {
+
+    phoneCreated: 'graph',
+
+    chatCreated: 'graph',
+
+    emailCreated: 'graph'
+
+  };
+
+  // =========================================================
+// LAST UPDATED
+// =========================================================
+
+lastUpdated = '';
+
+  // =========================================================
+  // INIT
+  // =========================================================
+
+  ngOnInit(): void {
+
+    this.loadDashboard();
+
   }
 
   // =========================================================
   // LOAD
   // =========================================================
 
-  loadMetrics() {
+  loadDashboard() {
 
-  this.loading = true;
+    this.loading = true;
 
-  this.api.getBimiMetrics().subscribe({
+    this.api.getBimiDashboard(
 
-    next: (data: any[]) => {
+      this.selectedBrand,
 
-      const groupedLobs: any = {};
+      this.selectedRange,
 
-      // =====================================================
-      // GROUP DATA
-      // =====================================================
+      this.timezone
 
-      data.forEach((row: any) => {
+    ).subscribe({
 
-        const lobCode = row.lob_code || 'unknown';
+      next: (res: any) => {
+        this.tickets =
+          res.tickets || [];
 
-        if (!groupedLobs[lobCode]) {
-          groupedLobs[lobCode] = {
-            name: row.lob_name,
-            code: row.lob_code,
-            metrics: [],
-            metricPage: 0
-          };
-        }
+        this.processDashboard();
 
-        const lob = groupedLobs[lobCode];
+        this.lastUpdated = new Date().toLocaleString();
 
-        const metricKey =
-          `${row.metric_id}_${row.channel_id}`;
+        this.loading = false;
 
-        let metric =
-          lob.metrics.find((m: any) => m.metricKey === metricKey);
+      },
 
-        if (!metric) {
+      error: (err: any) => {
 
-          metric = {
-            metricKey,
-            selectedDay: null,
-            weekPage: 0,
+        console.error(err);
 
-            metricId: row.metric_id,
-            channelId: row.channel_id,
-            name: `${row.metric_name} (${row.channel_name})`,
+        this.loading = false;
 
-            dailyData: {},
-            dailyCards: [],
-
-            summaryMetrics: {
-              totalVolume: 0,
-              avgPerInterval: 0,
-              maxVolume: 0,
-              activeIntervals: 0
-            },
-
-            chartOptions: null,
-            latestValue: 0
-          };
-
-          lob.metrics.push(metric);
-        }
-
-        const value = Number(row.metric_value);
-
-        const snapshot = this.convertTime(
-          new Date(row.snapshot_at_utc)
-        );
-
-        const dayKey =
-          `${snapshot.getFullYear()}-${
-            String(snapshot.getMonth() + 1).padStart(2, '0')
-          }-${
-            String(snapshot.getDate()).padStart(2, '0')
-          }`;
-
-        if (!metric.dailyData[dayKey]) {
-          metric.dailyData[dayKey] = [];
-        }
-
-        metric.dailyData[dayKey].push({
-          time: snapshot.toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-          }),
-          value,
-          timestamp: snapshot.getTime()
-        });
-
-      });
-
-      // =====================================================
-      // FINALIZE
-      // =====================================================
-
-      const clients: any[] = [];
-
-      for (const key in groupedLobs) {
-
-        const lob = groupedLobs[key];
-
-        lob.metrics.forEach((metric: any) => {
-
-          metric.dailyCards =
-            Object.keys(metric.dailyData)
-              .map(day => {
-
-                const isBacklog =
-                  this.isBacklogMetric(metric.name);
-
-                const dayData =
-                  metric.dailyData[day];
-
-                const sortedDayData =
-                  [...dayData].sort(
-                    (a, b) =>
-                      (a.timestamp || 0) -
-                      (b.timestamp || 0)
-                  );
-
-                const values =
-                  sortedDayData.map(
-                    (d: any) => d.value
-                  );
-
-                const total = isBacklog
-                  ? (sortedDayData.at(-1)?.value || 0)
-                  : values.reduce(
-                      (a: number, b: number) => a + b,
-                      0
-                    );
-
-                return {
-                  day,
-                  volume: Math.round(total),
-                  data: sortedDayData
-                };
-
-              })
-              .sort((a: any, b: any) =>
-                b.day.localeCompare(a.day)
-              );
-
-          const firstDay =
-            metric.selectedDay ||
-            metric.dailyCards.at(0);
-
-          if (firstDay) {
-
-            metric.selectedDay = firstDay;
-
-            this.applyChart(metric, firstDay.data);
-          }
-
-        });
-
-        clients.push(lob);
       }
-
-      this.clients = clients;
-
-      // IMPORTANT
-      this.loading = false;
-
-    },
-
-    error: (err: any) => {
-
-      console.error(err);
-
-      this.loading = false;
-    }
-
-  });
-
-}
-
-  // =========================================================
-  // DAY CLICK
-  // =========================================================
-
-  selectDay(metric: any, day: any) {
-    metric.selectedDay = day;
-    this.applyChart(metric, day.data);
-  }
-
-  // =========================================================
-  // CORE LOGIC
-  // =========================================================
-
-  private applyChart(metric: any, data: any[]) {
-
-    const isBacklog =
-      this.isBacklogMetric(metric.name);
-
-    const sorted =
-      [...data].sort(
-        (a, b) =>
-          (a.timestamp || 0) -
-          (b.timestamp || 0)
-      );
-
-    const values =
-      sorted.map(d => d.value);
-
-    const total = isBacklog
-      ? (sorted.at(-1)?.value || 0)
-      : values.reduce((a, b) => a + b, 0);
-
-    const max =
-      Math.max(...values, 0);
-
-    const active =
-      values.filter(v => v > 0).length;
-
-    const lastValue = isBacklog
-      ? (sorted.at(-1)?.value || 0)
-      : sorted.at(-1)?.value || 0;
-
-    metric.latestValue = lastValue;
-
-    metric.summaryMetrics = {
-      totalVolume: Math.round(total),
-
-      avgPerInterval: values.length
-        ? (total / values.length).toFixed(2)
-        : '0.00',
-
-      maxVolume: max,
-
-      activeIntervals: active
-    };
-
-    metric.chartOptions =
-      this.buildChart(sorted);
-  }
-
-  // =========================================================
-  // REBUILD (TIMEZONE)
-  // =========================================================
-
-  rebuildCharts() {
-
-    this.clients.forEach(lob => {
-
-      lob.metrics.forEach((metric: any) => {
-
-        const selected =
-          metric.selectedDay ||
-          metric.dailyCards?.at(0);
-
-        if (selected) {
-          this.applyChart(metric, selected.data);
-        }
-
-      });
 
     });
 
   }
 
   // =========================================================
-  // PAGINATION
+  // PROCESS
   // =========================================================
 
-  getCurrentClient() {
-    return this.clients[this.currentLobPage];
-  }
-
-  totalLobPages() {
-    return Math.max(1, this.clients.length);
-  }
-
-  nextLobPage() {
-    if (
-      this.currentLobPage <
-      this.totalLobPages() - 1
-    ) {
-      this.currentLobPage++;
-    }
-  }
-
-  previousLobPage() {
-    if (this.currentLobPage > 0) {
-      this.currentLobPage--;
-    }
-  }
-
-  nextMetric(client: any) {
-    if (
-      client.metricPage <
-      client.metrics.length - 1
-    ) {
-      client.metricPage++;
-    }
-  }
-
-  previousMetric(client: any) {
-    if (client.metricPage > 0) {
-      client.metricPage--;
-    }
-  }
-
-  getCurrentMetric(client: any) {
-    return client.metrics[client.metricPage];
-  }
-
-
-  // =========================================================
-// WEEK PAGINATION
-// =========================================================
-
-getVisibleDays(metric: any) {
-
-  const start =
-    metric.weekPage * 7;
-
-  const end =
-    start + 7;
-
-  return metric.dailyCards.slice(start, end);
-}
-
-nextWeek(metric: any) {
-
-  const totalPages =
-    Math.ceil(metric.dailyCards.length / 7);
-
-  if (metric.weekPage < totalPages - 1) {
-    metric.weekPage++;
-  }
-}
-
-previousWeek(metric: any) {
-
-  if (metric.weekPage > 0) {
-    metric.weekPage--;
-  }
-}
-
-// =========================================================
-// LIVE ZENDESK TICKETS
-// =========================================================
-
-openTicketModal(client: any, metric: any) {
-
-  this.showTicketModal = true;
-
-  this.loadingTickets = true;
-
-  this.liveTickets = [];
-
-  try {
+  processDashboard() {
 
     // =====================================================
-    // GET LAST INTERVAL
+    // OVERVIEW
     // =====================================================
 
-    const sorted =
-      [...metric.selectedDay.data]
-        .sort((a, b) =>
-          (b.timestamp || 0) -
-          (a.timestamp || 0)
-        );
+    this.totalOpened =
+      this.tickets.length;
 
-    const latest =
-      sorted[0];
+    this.totalClosed =
+      this.tickets.filter(t =>
 
-    if (!latest) {
+        ['solved', 'closed']
+          .includes(
+            (t.status || '')
+              .toLowerCase()
+          )
 
-      this.loadingTickets = false;
-
-      return;
-    }
+      ).length;
 
     // =====================================================
-    // WINDOW
+    // OVERVIEW DATA
     // =====================================================
 
-const intervalEnd =
-  new Date(latest.timestamp);
+    const allDays =
+      this.extractDays();
 
-// =====================================================
-// START OF DAY
-// =====================================================
+    const overviewData =
 
-const intervalStart =
-  new Date(intervalEnd);
+      allDays.map(day => {
 
-intervalStart.setHours(0);
-intervalStart.setMinutes(0);
-intervalStart.setSeconds(0);
-intervalStart.setMilliseconds(0);
+        const dayTickets =
 
-    // =====================================================
-    // TITLE
-    // =====================================================
+          this.tickets.filter(t =>
 
-    this.ticketModalTitle =
-      `${client.name} - ${metric.name}`;
+            this.getDay(
+              t.created_at
+            ) === day
 
-    // =====================================================
-    // LOB QUERY
-    // =====================================================
+          );
 
-    let lobQuery = '';
+        const opened =
+          dayTickets.length;
 
-    const lobMap: any = {
+        const closed =
 
-      haggar:
-        'custom_field_48599291116059:01KP7FPAFKCBCYM07598S1TP0J',
+          dayTickets.filter(t =>
 
-      colehaan:
-        'custom_field_48599291116059:01KP7FPAGD7P2MTYPKX9PYFVQN',
-            kimco:
-        'custom_field_48599291116059:01KP7FPAGD7P2MTYPKX9PYFVQN',
-              marcjacobs:
-        'custom_field_48599291116059:01KP7FPAGD7P2MTYPKX9PYFVQN',
+            ['solved', 'closed']
+              .includes(
+                (t.status || '')
+                  .toLowerCase()
+              )
 
-    };
+          ).length;
 
-    lobQuery =
-      lobMap[
-        client.code?.toLowerCase()
-      ] || '';
+        return {
+
+          day,
+
+          opened,
+
+          closed
+
+        };
+
+      });
 
     // =====================================================
-    // CHANNEL
+    // MAIN CHART
     // =====================================================
 
-    let channel = '';
+    this.overviewChart =
 
-    const metricName =
-      metric.name.toLowerCase();
+      this.buildDoubleLineChart(
 
-    if (metricName.includes('(email)')) {
-      channel = 'mail';
-    }
+        overviewData,
 
-    if (metricName.includes('(phone)')) {
-      channel = 'phone';
-    }
+        'opened',
 
-    if (metricName.includes('(chat)')) {
-      channel = 'chat';
-    }
+        'closed'
 
-    // =====================================================
-    // METRIC TYPE
-    // =====================================================
-
-    let metricType = '';
-
-    if (metricName.includes('opened')) {
-      metricType = 'opened';
-    }
-
-    if (metricName.includes('solved')) {
-      metricType = 'solved';
-    }
-
-    if (metricName.includes('backlog')) {
-      metricType = 'backlog';
-    }
-
-    // =====================================================
-    // PAYLOAD
-    // =====================================================
-
-    const payload = {
-
-      lobField:lobQuery,
-
-      channel,
-
-      metricType,
-
-      intervalStartUtc:
-        intervalStart.toISOString(),
-
-      intervalEndUtc:
-        intervalEnd.toISOString()
-
-    };
-
-    // =====================================================
-    // API CALL
-    // =====================================================
-
-this.api
-  .getLiveZendeskTickets(payload)
-  .subscribe({
-
-    next: (response: any) => {
-
-      this.liveTickets =
-        (response.tickets || []).map((ticket: any) => {
-
-          return {
-
-            ticketId:
-              ticket.ticketId,
-
-            status:
-              ticket.status,
-
-            channel:
-              ticket.channel,
-
-            createdAt:
-              ticket.createdAt,
-
-            zendeskUrl:
-              `https://cxperts-63539.zendesk.com/agent/tickets/${ticket.ticketId}`
-
-          };
-
-        });
-
-      this.loadingTickets = false;
-    },
-
-    error: (err: any) => {
-
-      console.error(
-        'Zendesk live error',
-        err
       );
 
-      this.loadingTickets = false;
+    // =====================================================
+    // CREATED CHARTS
+    // =====================================================
+
+    this.phoneCreatedChart =
+      this.buildCreatedChart(
+        'phone'
+      );
+
+    this.chatCreatedChart =
+      this.buildCreatedChart(
+        'chat'
+      );
+
+    this.emailCreatedChart =
+      this.buildCreatedChart(
+        'email'
+      );
+
+    // =====================================================
+    // CLOSE RATE
+    // =====================================================
+
+    this.phoneCloseChart =
+      this.buildCloseRateChart(
+        'phone'
+      );
+
+    this.chatCloseChart =
+      this.buildCloseRateChart(
+        'chat'
+      );
+
+    this.emailCloseChart =
+      this.buildCloseRateChart(
+        'email'
+      );
+
+  }
+
+  // =========================================================
+  // TIMEZONE
+  // =========================================================
+
+  setTimezone(
+    timezone: 'UTC' | 'EST' | 'EDT'
+  ) {
+
+    this.timezone = timezone;
+
+    // =====================================================
+    // RELOAD FROM API
+    // =====================================================
+
+    this.loadDashboard();
+
+  }
+
+  // =========================================================
+  // TOGGLE VIEW
+  // =========================================================
+
+  toggleView(
+    key: string
+  ) {
+
+    this.viewModes[key] =
+
+      this.viewModes[key] === 'graph'
+
+        ? 'table'
+
+        : 'graph';
+
+  }
+
+  // =========================================================
+  // CHANNEL TOTAL
+  // =========================================================
+
+  getChannelTotal(
+    channel: string
+  ): number {
+
+    return this.tickets.filter(t =>
+
+      this.normalizeChannel(
+        t.channel
+      ) === channel
+
+    ).length;
+
+  }
+
+  // =========================================================
+  // DATE HELPERS
+  // =========================================================
+
+  formatDateByTimezone(
+    date: string
+  ): Date {
+
+    const utcDate =
+      new Date(date);
+
+    // =====================================================
+    // UTC
+    // =====================================================
+
+    if (this.timezone === 'UTC') {
+
+      return utcDate;
+
     }
 
-  });
+    // =====================================================
+    // EST
+    // =====================================================
+
+    if (this.timezone === 'EST') {
+
+      return new Date(
+
+        utcDate.getTime()
+
+        -
+
+        (
+          5 *
+          60 *
+          60 *
+          1000
+        )
+
+      );
+
+    }
+
+    // =====================================================
+    // EDT
+    // =====================================================
+
+    return new Date(
+
+      utcDate.getTime()
+
+      -
+
+      (
+        4 *
+        60 *
+        60 *
+        1000
+      )
+
+    );
 
   }
-  catch (err) {
 
-    console.error(err);
+  // =========================================================
+  // GET DAY
+  // =========================================================
 
-    this.loadingTickets = false;
+  getDay(
+    date: string
+  ): string {
+
+    const d =
+      this.formatDateByTimezone(
+        date
+      );
+
+    const year =
+      d.getFullYear();
+
+    const month =
+      String(
+        d.getMonth() + 1
+      ).padStart(2, '0');
+
+    const day =
+      String(
+        d.getDate()
+      ).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+
   }
 
-}
-
-closeTicketModal() {
-
-  this.showTicketModal = false;
-
-  this.liveTickets = [];
-}
   // =========================================================
-  // CHART
+  // EXTRACT DAYS
   // =========================================================
 
-  buildChart(data: any[]) {
+  extractDays(): string[] {
+
+    const days =
+
+      this.tickets.map(t =>
+
+        this.getDay(
+          t.created_at
+        )
+
+      );
+
+    return [
+
+      ...new Set(days)
+
+    ].sort();
+
+  }
+
+  // =========================================================
+  // CHANNELS
+  // =========================================================
+
+  normalizeChannel(
+    channel: string
+  ): string {
+
+    const c =
+      (channel || '')
+        .toLowerCase();
+
+    // =====================================================
+    // PHONE
+    // =====================================================
+
+    if (
+
+      c.includes('voice')
+
+      ||
+
+      c.includes('phone')
+
+      ||
+
+      c.includes('api')
+
+      ||
+
+      c.includes('outbound')
+
+      ||
+
+      c.includes('inbound')
+
+    ) {
+
+      return 'phone';
+
+    }
+
+    // =====================================================
+    // CHAT
+    // =====================================================
+
+    if (
+
+      c.includes('chat')
+
+      ||
+
+      c.includes('messaging')
+
+      ||
+
+      c.includes('native_messaging')
+
+    ) {
+
+      return 'chat';
+
+    }
+
+    // =====================================================
+    // EMAIL
+    // =====================================================
+
+    if (
+
+      c.includes('mail')
+
+      ||
+
+      c.includes('email')
+
+      ||
+
+      c.includes('web')
+
+    ) {
+
+      return 'email';
+
+    }
+
+    return 'other';
+
+  }
+
+  // =========================================================
+  // CREATED CHART
+  // =========================================================
+
+  buildCreatedChart(
+    channel: string
+  ) {
+
+    const days =
+      this.extractDays();
+
+    const data =
+
+      days.map(day => {
+
+        const total =
+
+          this.tickets.filter(t => {
+
+            return (
+
+              this.getDay(
+                t.created_at
+              ) === day
+
+              &&
+
+              this.normalizeChannel(
+                t.channel
+              ) === channel
+
+            );
+
+          }).length;
+
+        return {
+
+          day,
+
+          value: total
+
+        };
+
+      });
+
+    return this.buildSingleChart(
+      data,
+      'value'
+    );
+
+  }
+
+  // =========================================================
+  // CLOSE RATE CHART
+  // =========================================================
+
+  buildCloseRateChart(
+    channel: string
+  ) {
+
+    const days =
+      this.extractDays();
+
+    const data =
+
+      days.map(day => {
+
+        const opened =
+
+          this.tickets.filter(t => {
+
+            return (
+
+              this.getDay(
+                t.created_at
+              ) === day
+
+              &&
+
+              this.normalizeChannel(
+                t.channel
+              ) === channel
+
+            );
+
+          });
+
+        const closed =
+
+          opened.filter(t =>
+
+            ['solved', 'closed']
+              .includes(
+                (t.status || '')
+                  .toLowerCase()
+              )
+
+          );
+
+        const percent =
+
+          opened.length
+
+            ?
+
+            Number(
+
+              (
+
+                (
+                  closed.length
+                  /
+                  opened.length
+                )
+
+                * 100
+
+              ).toFixed(2)
+
+            )
+
+            :
+
+            0;
+
+        return {
+
+          day,
+
+          value: percent
+
+        };
+
+      });
+
+    return this.buildSingleChart(
+      data,
+      'value'
+    );
+
+  }
+
+  // =========================================================
+  // SINGLE CHART
+  // =========================================================
+
+  buildSingleChart(
+    data: any[],
+    yKey: string
+  ) {
 
     return {
-      autoSize: true,
-      height: 360,
 
       data,
 
-      series: [{
-        type: 'line',
-        xKey: 'time',
-        yKey: 'value',
-        strokeWidth: 4,
-        marker: {
-          enabled: false
+      height: 260,
+
+      autoSize: true,
+
+      padding: {
+        top: 20,
+        right: 20,
+        bottom: 30,
+        left: 40
+      },
+
+      series: [
+
+        {
+          type: 'line',
+
+          xKey: 'day',
+
+          yKey,
+
+          marker: {
+            enabled: true,
+            size: 6
+          },
+
+          strokeWidth: 3
         }
-      }],
+
+      ],
 
       axes: [
+
         {
           type: 'category',
-          position: 'bottom'
+          position: 'bottom',
+          label: {
+            rotation: 0,
+            fontSize: 11
+          }
         },
+
         {
           type: 'number',
-          position: 'left'
+          position: 'left',
+          label: {
+            fontSize: 11
+          }
         }
+
       ],
 
       legend: {
         enabled: false
       }
+
+    };
+
+  }
+
+  // =========================================================
+  // DOUBLE LINE CHART
+  // =========================================================
+
+  buildDoubleLineChart(
+    data: any[],
+    openedKey: string,
+    closedKey: string
+  ) {
+
+    return {
+
+      data,
+
+      height: 420,
+
+      autoSize: true,
+
+      padding: {
+        top: 20,
+        right: 20,
+        bottom: 40,
+        left: 50
+      },
+
+      series: [
+
+        {
+          type: 'line',
+
+          xKey: 'day',
+
+          yKey: openedKey,
+
+          yName: 'Opened',
+
+          marker: {
+            enabled: true,
+            size: 7
+          },
+
+          strokeWidth: 4
+        },
+
+        {
+          type: 'line',
+
+          xKey: 'day',
+
+          yKey: closedKey,
+
+          yName: 'Closed',
+
+          marker: {
+            enabled: true,
+            size: 7
+          },
+
+          strokeWidth: 4
+        }
+
+      ],
+
+      axes: [
+
+        {
+          type: 'category',
+          position: 'bottom',
+          label: {
+            rotation: 0,
+            fontSize: 12
+          }
+        },
+
+        {
+          type: 'number',
+          position: 'left',
+          label: {
+            fontSize: 12
+          }
+        }
+
+      ],
+
+      legend: {
+        enabled: true,
+        position: 'bottom'
+      }
+
     };
 
   }

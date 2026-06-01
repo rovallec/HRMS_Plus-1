@@ -1,45 +1,197 @@
-<div class="section">
+<!-- =========================================================
+TOP BAR
+========================================================= -->
 
-    <h3 class="agent-title">
-        BIMI Dashboard
-    </h3>
+<div class="top-bar">
 
-    <div class="agent-underline"></div>
+    <!-- =====================================================
+    LEFT SIDE
+    ====================================================== -->
 
-    <!-- GLOBAL BAR -->
-    <div class="global-bar">
+    <div class="top-left">
 
-        <div class="global-pagination">
+        <!-- =================================================
+        TITLE
+        ================================================== -->
 
-            <button class="page-btn" (click)="previousLobPage()">‹</button>
+        <div class="title-wrapper">
 
-            <span class="page-indicator">
-                {{ currentLobPage + 1 }} / {{ totalLobPages() }}
-            </span>
+            <h3 class="agent-title">
+                BIMI Dashboard
+            </h3>
 
-            <button class="page-btn" (click)="nextLobPage()">›</button>
+            <div class="agent-underline"></div>
 
         </div>
 
-        <!-- TIMEZONE TOGGLE SWITCH -->
-        <div class="timezone-toggle">
+        <!-- =================================================
+        FILTER BAR
+        ================================================== -->
 
-            <span class="tz-label">
-                {{ timezone }}
-            </span>
+        <div class="filter-bar">
 
-            <label class="switch">
-                <input type="checkbox" (change)="toggleTimezone()" [checked]="timezone === 'ET'">
-                <span class="slider"></span>
-            </label>
+            <!-- =============================================
+            BRAND
+            ============================================== -->
+
+            <div class="filter-group">
+
+                <label>
+                    Related Brand
+                </label>
+
+                <select
+                    [(ngModel)]="selectedBrand"
+                    (change)="loadDashboard()">
+
+                    <option
+                        *ngFor="let brand of brands"
+                        [value]="brand.value">
+
+                        {{ brand.label }}
+
+                    </option>
+
+                </select>
+
+            </div>
+
+            <!-- =============================================
+            RANGE
+            ============================================== -->
+
+            <div class="filter-group">
+
+                <label>
+                    Date Range
+                </label>
+
+                <select
+                    [(ngModel)]="selectedRange"
+                    (change)="loadDashboard()">
+
+                    <option
+                        *ngFor="let range of ranges"
+                        [value]="range.value">
+
+                        {{ range.label }}
+
+                    </option>
+
+                </select>
+
+            </div>
 
         </div>
 
     </div>
 
+    <!-- =====================================================
+    RIGHT SIDE
+    ====================================================== -->
 
-    <!-- LOADING -->
-    <div class="profile-surface" *ngIf="loading">
+    <div class="right-actions">
+
+        <!-- =================================================
+        TIMEZONE CARD
+        ================================================== -->
+
+        <div class="timezone-card">
+
+            <div class="timezone-header">
+
+                <div class="timezone-title">
+                    Timezone
+                </div>
+
+                <div class="timezone-active">
+
+                    {{ timezone }}
+
+                </div>
+
+            </div>
+
+            <div class="timezone-switch-group">
+
+                <button
+                    type="button"
+                    class="timezone-btn"
+                    [class.active]="timezone === 'UTC'"
+                    (click)="setTimezone('UTC')">
+
+                    UTC
+
+                </button>
+
+                <button
+                    type="button"
+                    class="timezone-btn"
+                    [class.active]="timezone === 'EST'"
+                    (click)="setTimezone('EST')">
+
+                    EST
+
+                </button>
+
+                <button
+                    type="button"
+                    class="timezone-btn"
+                    [class.active]="timezone === 'EDT'"
+                    (click)="setTimezone('EDT')">
+
+                    EDT
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- =================================================
+        REFRESH CARD
+        ================================================== -->
+
+        <div class="refresh-panel">
+
+            <button
+                type="button"
+                class="refresh-btn"
+                (click)="loadDashboard()">
+
+                <i class="bi bi-arrow-clockwise"></i>
+
+            </button>
+
+            <div class="refresh-label">
+
+                Last updated:
+                <br>
+
+                {{ lastUpdated || 'Never' }}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+SECTION
+========================================================= -->
+
+<div class="section">
+
+    <!-- =====================================================
+    LOADER
+    ====================================================== -->
+
+    <div
+        class="profile-surface"
+        *ngIf="loading">
+
         <div class="cx-card-loading">
 
             <div class="loader-orbit">
@@ -53,248 +205,245 @@
                 </div>
 
             </div>
-        </div>
-    </div>
-    <div *ngIf="!loading">
-        <!-- CLIENT -->
-        <div class="profile-surface" *ngIf="getCurrentClient() as client">
-
-            <div class="client-header">
-
-                <div>
-
-                    <div class="client-name">
-                        {{ client.name }}
-                    </div>
-
-                    <div class="client-code">
-                        {{ client.code }}
-                    </div>
-
-                </div>
-
-                <div class="metric-pagination">
-
-                    <button class="page-btn" (click)="previousMetric(client)">
-                        ‹
-                    </button>
-
-                    <span class="page-indicator">
-                        {{ client.metricPage + 1 }} / {{ client.metrics.length }}
-                    </span>
-
-                    <button class="page-btn" (click)="nextMetric(client)">
-                        ›
-                    </button>
-
-                </div>
-
-            </div>
-
-            <!-- MAIN -->
-            <div class="main-layout" *ngIf="getCurrentMetric(client) as metric">
-
-                <!-- LEFT -->
-                <div class="chart-section">
-
-<!-- DAILY CARDS -->
-<div class="daily-cards-wrapper">
-
-    <button class="week-btn"
-        (click)="previousWeek(metric)">
-        ‹
-    </button>
-
-    <div class="daily-cards">
-
-        <div class="day-card"
-            *ngFor="let day of getVisibleDays(metric)"
-            (click)="selectDay(metric, day)"
-            [class.active]="metric.selectedDay?.day === day.day">
-
-            <div class="day-title">
-                {{ day.day }}
-            </div>
-
-            <div class="day-volume">
-                {{ day.volume }}
-            </div>
 
         </div>
 
     </div>
 
-    <button class="week-btn"
-        (click)="nextWeek(metric)">
-        ›
-    </button>
+    <!-- =====================================================
+    DASHBOARD
+    ====================================================== -->
 
-</div>
+    <div
+        class="profile-surface"
+        *ngIf="!loading">
 
-                    <div class="metric-title">
-                        {{ metric.name }}
+        <!-- =================================================
+        OVERVIEW CARDS
+        ================================================== -->
+
+        <div class="overview-grid">
+
+            <div class="summary-card">
+
+                <div class="summary-label">
+                    Total Opened
+                </div>
+
+                <div class="summary-value">
+                    {{ totalOpened }}
+                </div>
+
+            </div>
+
+            <div class="summary-card">
+
+                <div class="summary-label">
+                    Total Closed
+                </div>
+
+                <div class="summary-value">
+                    {{ totalClosed }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- =================================================
+        MAIN CHART
+        ================================================== -->
+
+        <div class="chart-card main-chart-card">
+
+            <div class="chart-title">
+                Opened vs Closed
+            </div>
+
+            <div class="chart-wrapper main-chart-wrapper">
+
+                <ag-charts
+                    class="chart-element"
+                    [options]="overviewChart">
+                </ag-charts>
+
+            </div>
+
+        </div>
+
+        <!-- =================================================
+        CREATED TICKETS
+        ================================================== -->
+
+        <div class="triple-grid">
+
+            <!-- PHONE -->
+
+            <div class="chart-card small-chart-card">
+
+                <div class="chart-header">
+
+                    <div class="chart-title">
+                        Phone Created Tickets
                     </div>
 
-                    <div class="metric-value">
-                        {{ metric.latestValue }}
-                    </div>
+                    <div class="chart-toggle-group">
 
-                    <div class="metric-chart">
-                        <ag-charts [options]="metric.chartOptions"></ag-charts>
+                        <button
+                            class="chart-toggle-btn"
+                            [class.active]="viewModes.phoneCreated === 'graph'"
+                            (click)="viewModes.phoneCreated = 'graph'">
+
+                            <i class="bi bi-graph-up"></i>
+
+                        </button>
+
+                        <button
+                            class="chart-toggle-btn"
+                            [class.active]="viewModes.phoneCreated === 'table'"
+                            (click)="viewModes.phoneCreated = 'table'">
+
+                            <i class="bi bi-123"></i>
+
+                        </button>
+
                     </div>
 
                 </div>
 
-                <!-- RIGHT -->
-                <div class="side-metrics">
+                <div
+                    class="chart-wrapper small-chart-wrapper"
+                    *ngIf="viewModes.phoneCreated === 'graph'">
 
-<div class="summary-card clickable"
-     (click)="openTicketModal(client, metric)">
+                    <ag-charts
+                        class="chart-element"
+                        [options]="phoneCreatedChart">
+                    </ag-charts>
 
-                        <div class="summary-label">
-                            Total Volume
-                        </div>
+                </div>
 
-                        <div class="summary-value">
-                            {{ metric.summaryMetrics.totalVolume }}
-                        </div>
+                <div
+                    class="metric-view"
+                    *ngIf="viewModes.phoneCreated === 'table'">
+
+                    {{ getChannelTotal('phone') }}
+
+                </div>
+
+            </div>
+
+            <!-- CHAT -->
+
+            <div class="chart-card small-chart-card">
+
+                <div class="chart-header">
+
+                    <div class="chart-title">
+                        Chat Created Tickets
+                    </div>
+
+                    <div class="chart-toggle-group">
+
+                        <button
+                            class="chart-toggle-btn"
+                            [class.active]="viewModes.chatCreated === 'graph'"
+                            (click)="viewModes.chatCreated = 'graph'">
+
+                            <i class="bi bi-graph-up"></i>
+
+                        </button>
+
+                        <button
+                            class="chart-toggle-btn"
+                            [class.active]="viewModes.chatCreated === 'table'"
+                            (click)="viewModes.chatCreated = 'table'">
+
+                            <i class="bi bi-123"></i>
+
+                        </button>
 
                     </div>
 
-                    <div class="summary-card">
+                </div>
 
-                        <div class="summary-label">
-                            Avg / Interval
-                        </div>
+                <div
+                    class="chart-wrapper small-chart-wrapper"
+                    *ngIf="viewModes.chatCreated === 'graph'">
 
-                        <div class="summary-value">
-                            {{ metric.summaryMetrics.avgPerInterval }}
-                        </div>
+                    <ag-charts
+                        class="chart-element"
+                        [options]="chatCreatedChart">
+                    </ag-charts>
+
+                </div>
+
+                <div
+                    class="metric-view"
+                    *ngIf="viewModes.chatCreated === 'table'">
+
+                    {{ getChannelTotal('chat') }}
+
+                </div>
+
+            </div>
+
+            <!-- EMAIL -->
+
+            <div class="chart-card small-chart-card">
+
+                <div class="chart-header">
+
+                    <div class="chart-title">
+                        Email Created Tickets
+                    </div>
+
+                    <div class="chart-toggle-group">
+
+                        <button
+                            class="chart-toggle-btn"
+                            [class.active]="viewModes.emailCreated === 'graph'"
+                            (click)="viewModes.emailCreated = 'graph'">
+
+                            <i class="bi bi-graph-up"></i>
+
+                        </button>
+
+                        <button
+                            class="chart-toggle-btn"
+                            [class.active]="viewModes.emailCreated === 'table'"
+                            (click)="viewModes.emailCreated = 'table'">
+
+                            <i class="bi bi-123"></i>
+
+                        </button>
 
                     </div>
 
-                    <div class="summary-card">
+                </div>
 
-                        <div class="summary-label">
-                            Peak Volume
-                        </div>
+                <div
+                    class="chart-wrapper small-chart-wrapper"
+                    *ngIf="viewModes.emailCreated === 'graph'">
 
-                        <div class="summary-value">
-                            {{ metric.summaryMetrics.maxVolume }}
-                        </div>
+                    <ag-charts
+                        class="chart-element"
+                        [options]="emailCreatedChart">
+                    </ag-charts>
 
-                    </div>
+                </div>
 
-                    <div class="summary-card">
+                <div
+                    class="metric-view"
+                    *ngIf="viewModes.emailCreated === 'table'">
 
-                        <div class="summary-label">
-                            Active Intervals
-                        </div>
-
-                        <div class="summary-value">
-                            {{ metric.summaryMetrics.activeIntervals }}
-                        </div>
-
-                    </div>
+                    {{ getChannelTotal('email') }}
 
                 </div>
 
             </div>
 
         </div>
-    </div>
-</div>
-
-<!-- ===================================================== -->
-<!-- LIVE TICKETS MODAL -->
-<!-- ===================================================== -->
-
-<div class="ticket-modal-overlay"
-     *ngIf="showTicketModal">
-
-  <div class="ticket-modal">
-
-    <div class="ticket-modal-header">
-
-      <div>
-
-        <div class="ticket-modal-title">
-          Live Zendesk Tickets
-        </div>
-
-        <div class="ticket-modal-subtitle">
-          {{ ticketModalTitle }}
-        </div>
-
-      </div>
-
-      <button class="close-btn"
-              (click)="closeTicketModal()">
-        ✕
-      </button>
 
     </div>
-
-    <!-- LOADING -->
-
-        <div class="cx-card-loading" *ngIf="loadingTickets">
-
-            <div class="loader-orbit">
-
-                <div class="orbit orbit-1"></div>
-                <div class="orbit orbit-2"></div>
-                <div class="orbit orbit-3"></div>
-
-                <div class="loader-center">
-                    cx
-                </div>
-
-            </div>
-        </div>
-
-    <!-- TABLE -->
-
-    <table *ngIf="!loadingTickets">
-
-      <thead>
-
-        <tr>
-          <th>Ticket</th>
-          <th>Status</th>
-          <th>Channel</th>
-          <th>Created</th>
-        </tr>
-
-      </thead>
-
-      <tbody>
-
-        <tr *ngFor="let ticket of liveTickets">
-
-          <td>
-
-            <a
-              [href]="'https://cxperts-63539.zendesk.com/agent/tickets/' + ticket.ticketId"
-              target="_blank">
-
-              #{{ ticket.ticketId }}
-
-            </a>
-
-          </td>
-
-          <td>{{ ticket.status }}</td>
-
-          <td>{{ ticket.channel }}</td>
-
-          <td>{{ ticket.createdAt }}</td>
-
-        </tr>
-
-      </tbody>
-
-    </table>
-
-  </div>
 
 </div>

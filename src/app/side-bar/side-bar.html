@@ -29,18 +29,26 @@
            [routerLinkActiveOptions]="{ exact: true }">
           <i class="bi bi-envelope-open me-2"></i>Requests
         </a>
-      </li> -->
+      </li> 
+
+      <li class="nav-item">
+        <a class="nav-link"
+           routerLink="/cxOMS"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }">
+          <i class="bi bi-bar-chart me-2"></i>OMS
+        </a>
+      </li>
 
       <li class="nav-item">
         <a class="nav-link"
            routerLink="/bimi"
            routerLinkActive="active"
-           [routerLinkActiveOptions]="{ exact: true }"
-           *ngIf="currentUser.role === 4">
+           [routerLinkActiveOptions]="{ exact: true }">
           <i class="bi bi-bar-chart me-2"></i>BIMI
         </a>
       </li>
-
+-->
       <li class="nav-item">
         <a class="nav-link"
            routerLink="/kimco"

@@ -1,0 +1,87 @@
+<div class="customer-wrapper">
+
+  <!-- ===== BRAND HEADER ===== -->
+  <div class="brand-header">
+    <div class="brand-title">COLE HAAN</div>
+    <div class="brand-divider"></div>
+  </div>
+
+  <!-- ===== MAIN CARD ===== -->
+  <div class="container d-flex justify-content-center align-items-center">
+
+    <div class="card shadow-lg tracking-card">
+
+      <div class="row g-0">
+
+        <!-- LEFT: LOGO -->
+        <div class="col-md-4 logo-side d-flex align-items-center justify-content-center">
+          <img
+            src="//www.colehaan.com/cdn/shop/files/ColeHaan_NewYork_Logotype.svg?height=36&v=1757686074"
+            alt="Cole Haan Logo"
+            class="brand-logo"
+          />
+        </div>
+
+        <!-- RIGHT: ORDER INFO -->
+        <div class="col-md-8 p-4">
+
+          <!-- ⏳ Loading -->
+          <div *ngIf="isLoading" class="text-center py-4">
+            <div class="spinner-border text-dark mb-3"></div>
+            <p class="text-muted">Validating access...</p>
+          </div>
+
+          <!-- ❌ Error -->
+          <div *ngIf="!isLoading && !isValidToken">
+            <div class="alert alert-danger text-center">
+              {{ errorMessage }}
+            </div>
+          </div>
+
+          <!-- ✅ CONTENT -->
+          <div *ngIf="!isLoading && isValidToken">
+
+            <h4 class="mb-3 section-title">Order Details</h4>
+
+            <div class="blue-separator"></div>
+
+            <!-- CUSTOMER -->
+            <div class="mb-3">
+              <p><strong>Name:</strong> {{ customerData.name }}</p>
+              <p><strong>Email:</strong> {{ customerData.email }}</p>
+              <p><strong>Phone:</strong> {{ customerData.phone }}</p>
+            </div>
+
+            <div class="coral-separator"></div>
+
+            <!-- ORDER -->
+            <div>
+              <p><strong>Order #:</strong> {{ orderData.orderNumber }}</p>
+              <p><strong>Zip Code:</strong> {{ orderData.zipCode }}</p>
+
+              <p>
+                <strong>Status:</strong>
+                <span class="badge bg-dark">
+                  {{ orderData.status }}
+                </span>
+              </p>
+
+              <p><strong>Date:</strong> {{ orderData.date }}</p>
+            </div>
+
+          </div>
+
+          <!-- FOOTER -->
+          <div class="footer-text mt-4 text-center">
+            Customer OMS Portal Powered By cxperts
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

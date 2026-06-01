@@ -7,6 +7,8 @@ import { LoginComponent } from './login/login';
 import { AuthGuards } from './guards/authGuards';
 import { Bimi } from './bimi/bimi';
 import { KimcoCases } from './kimco-cases/kimco-cases';
+import { CxCustomerOMS } from './cx-customer-oms/cx-customer-oms';
+import { CxOms } from './cx-oms/cx-oms';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -20,7 +22,9 @@ export const routes: Routes = [
       { path: 'requests', component: Requests },
       { path: 'appeasement/codes', component: AppeasementAgent },
       { path: 'bimi', component: Bimi },
-      { path: 'kimco', component: KimcoCases },      
+      { path: 'kimco', component: KimcoCases },
+      { path: 'OMS', component: CxCustomerOMS },
+      { path: 'cxOMS', component: CxOms },
       { path: '', redirectTo: 'appeasement/codes', pathMatch: 'full' }
     ]
   },
