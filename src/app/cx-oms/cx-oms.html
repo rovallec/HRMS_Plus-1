@@ -12,37 +12,252 @@
         <!-- LIVE OMS RESULT -->
         <!-- ===================================================== -->
 
-        <div *ngIf="liveOrderResult">
+        <div *ngIf="liveOrderResult || storedOrderResult">
 
             <div class="live-toolbar">
 
-                <button
-                    class="btn btn-outline-secondary"
-                    (click)="closeLiveResult()">
-
+                <button class="btn btn-outline-secondary" (click)="closeLiveResult()">
                     Back
-
                 </button>
 
-                <div class="live-badge">
-                    LIVE OMS RESPONSE
+<div
+  class="badge"
+  [ngClass]="{
+    'offlinebadte': storedOrderResult,
+    'live-badge': !storedOrderResult
+  }"
+>
+    {{ storedOrderResult ? 'Stored Order' : 'Live Order' }}
+</div>
+
+            </div>
+
+            <!-- ===================================================== -->
+            <!-- COLE HAAN (BRAND 1) -->
+            <!-- ===================================================== -->
+
+            <ng-container *ngIf="selectedBrandId === '1'; else genericJson">
+
+                <!-- ===================================================== -->
+                <!-- TABS -->
+                <!-- ===================================================== -->
+
+                <div class="oms-tabs">
+
+                    <button (click)="activeOmsTab='order'" [class.active]="activeOmsTab==='order'">
+                        Order
+                    </button>
+
+                    <button (click)="activeOmsTab='customer'" [class.active]="activeOmsTab==='customer'">
+                        Customer
+                    </button>
+
+                    <button (click)="activeOmsTab='billing'" [class.active]="activeOmsTab==='billing'">
+                        Billing
+                    </button>
+
+                    <button (click)="activeOmsTab='tracking'" [class.active]="activeOmsTab==='tracking'">
+                        Tracking
+                    </button>
+
+                    <button (click)="activeOmsTab='items'" [class.active]="activeOmsTab==='items'">
+                        Items
+                    </button>
+
+                    <button (click)="activeOmsTab='system'" [class.active]="activeOmsTab==='system'">
+                        System
+                    </button>
+
                 </div>
 
-            </div>
+                <!-- ===================================================== -->
+                <!-- ORDER -->
+                <!-- ===================================================== -->
 
-            <div class="json-table">
+                <div class="tab-content" *ngIf="activeOmsTab==='order'">
 
-                <ng-container
-                    *ngTemplateOutlet="
-                        recursiveTemplate;
-                        context: {
-                            $implicit: liveOrderResult,
-                            path: 'root'
-                        }
-                    ">
-                </ng-container>
+                    <div class="info-grid">
 
-            </div>
+                        <div><strong>Order #:</strong> {{ liveOrderResult?.order?.orderNumber }}</div>
+                        <div><strong>Shopify:</strong> {{ liveOrderResult?.order?.shopifyOrderName }}</div>
+                        <div><strong>Placed:</strong> {{ liveOrderResult?.order?.placedAt }}</div>
+                        <div><strong>Updated:</strong> {{ liveOrderResult?.order?.updatedAt }}</div>
+                        <div><strong>Shipping Method:</strong> {{ liveOrderResult?.order?.shippingMethod }}</div>
+
+                        <hr>
+
+                        <div><strong>Status Summary:</strong> {{ liveOrderResult?.order?.status?.summary }}</div>
+                        <div><strong>Financial:</strong> {{ liveOrderResult?.order?.status?.financial }}</div>
+                        <div><strong>Fulfillment:</strong> {{ liveOrderResult?.order?.status?.fulfillment }}</div>
+                        <div><strong>Export:</strong> {{ liveOrderResult?.order?.status?.export }}</div>
+
+                        <div>
+                            <strong>Cancelled:</strong>
+                            {{ liveOrderResult?.order?.status?.cancelled }}
+                        </div>
+
+                        <div><strong>Cancelled At:</strong> {{ liveOrderResult?.order?.status?.cancelledAt }}</div>
+                        <div><strong>Cancel Reason:</strong> {{ liveOrderResult?.order?.status?.cancelReason }}</div>
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================================== -->
+                <!-- CUSTOMER -->
+                <!-- ===================================================== -->
+
+                <div class="tab-content" *ngIf="activeOmsTab==='customer'">
+
+                    <div class="info-grid">
+
+                        <div>
+                            <strong>Name:</strong>
+                            {{ liveOrderResult?.order?.customer?.firstName }}
+                            {{ liveOrderResult?.order?.customer?.lastName }}
+                        </div>
+
+                        <div><strong>City:</strong> {{ liveOrderResult?.order?.shippingAddress?.city }}</div>
+                        <div><strong>State:</strong> {{ liveOrderResult?.order?.shippingAddress?.provinceCode }}</div>
+                        <div><strong>Country:</strong> {{ liveOrderResult?.order?.shippingAddress?.countryCode }}</div>
+                        <div><strong>Postal Code:</strong> {{ liveOrderResult?.order?.shippingAddress?.postalCode }}
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================================== -->
+                <!-- BILLING -->
+                <!-- ===================================================== -->
+
+                <div class="tab-content" *ngIf="activeOmsTab==='billing'">
+
+                    <div class="info-grid">
+
+                        <div><strong>Currency:</strong> {{ liveOrderResult?.order?.totals?.currencyCode }}</div>
+                        <div><strong>Subtotal:</strong> {{ liveOrderResult?.order?.totals?.subtotalPrice }}</div>
+                        <div><strong>Shipping:</strong> {{ liveOrderResult?.order?.totals?.shippingPrice }}</div>
+                        <div><strong>Tax:</strong> {{ liveOrderResult?.order?.totals?.tax }}</div>
+                        <div><strong>Discount:</strong> {{ liveOrderResult?.order?.totals?.discount }}</div>
+                        <div><strong>Total:</strong> {{ liveOrderResult?.order?.totals?.totalPrice }}</div>
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================================== -->
+                <!-- TRACKING -->
+                <!-- ===================================================== -->
+
+                <div class="tab-content" *ngIf="activeOmsTab==='tracking'">
+
+                    <div class="info-grid">
+
+                        <div><strong>Available:</strong> {{ liveOrderResult?.order?.tracking?.trackingAvailable }}</div>
+                        <div><strong>Shipments:</strong> {{ liveOrderResult?.order?.tracking?.shipmentCount }}</div>
+
+                    </div>
+
+                    <div class="cards-grid">
+
+                        <div class="tracking-card"
+                            *ngFor="let t of liveOrderResult?.order?.tracking?.trackingNumbers; let i = index">
+
+                            <div class="tracking-title">Tracking #{{ i + 1 }}</div>
+                            <div class="tracking-number">{{ t }}</div>
+
+                            <a class="tracking-link" [href]="liveOrderResult?.order?.tracking?.trackingUrls[i]"
+                                target="_blank">
+
+                                Open Tracking
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================================== -->
+                <!-- ITEMS -->
+                <!-- ===================================================== -->
+
+                <div class="tab-content" *ngIf="activeOmsTab==='items'">
+
+                    <div class="cards-grid">
+
+                        <div class="item-card" *ngFor="let item of liveOrderResult?.order?.items">
+
+                            <div class="item-title">{{ item.title }}</div>
+                            <div class="item-sku">{{ item.sku }}</div>
+
+                            <div class="item-meta">
+                                Qty: {{ item.quantity }} | {{ item.fulfillmentStatus }}
+                            </div>
+
+                            <div class="item-extra">
+                                <div>Final Sale: {{ item.finalSale }}</div>
+                            </div>
+
+                            <div class="item-tracking" *ngIf="item.tracking?.length">
+
+                                <div *ngFor="let t of item.tracking">
+
+                                    <div>Tracking: {{ t.number }}</div>
+
+                                    <a [href]="t.url" target="_blank">
+                                        Track Package
+                                    </a>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================================== -->
+                <!-- SYSTEM / META -->
+                <!-- ===================================================== -->
+
+                <div class="tab-content" *ngIf="activeOmsTab==='system'">
+
+                    <div class="info-grid">
+
+                        <div><strong>Success:</strong> {{ liveOrderResult?.success }}</div>
+                        <div><strong>Lookup Mode:</strong> {{ liveOrderResult?.lookupMode }}</div>
+
+                    </div>
+
+                </div>
+
+            </ng-container>
+
+            <!-- ===================================================== -->
+            <!-- GENERIC JSON (OTHER BRANDS) -->
+            <!-- ===================================================== -->
+
+            <ng-template #genericJson>
+
+                <div class="json-table">
+
+                    <ng-container *ngTemplateOutlet="
+                    recursiveTemplate;
+                    context: {
+                        $implicit: liveOrderResult,
+                        path: 'root'
+                    }
+                ">
+                    </ng-container>
+
+                </div>
+
+            </ng-template>
 
         </div>
 
@@ -52,46 +267,23 @@
 
         <div *ngIf="!liveOrderResult">
 
-            <!-- CUSTOMER LIST -->
-
             <div *ngIf="!selectedCustomer">
 
                 <div class="toolbar">
 
-                    <input
-                        class="form-control"
-                        placeholder="Search by email, phone, name, order..."
-                        [(ngModel)]="searchTerm"
-                        (input)="search()" />
+                    <input class="form-control" placeholder="Search by email, phone, name, order..."
+                        [(ngModel)]="searchTerm" (input)="search()" />
 
                 </div>
 
                 <div class="row g-3">
 
-                    <div
-                        class="col-md-3"
-                        *ngFor="let c of paginatedCustomers">
+                    <div class="col-md-3" *ngFor="let c of paginatedCustomers">
 
-                        <div
-                            class="team-card"
-                            (click)="openCustomer(c)">
+                        <div class="team-card" (click)="openCustomer(c)">
 
-                            <div class="team-name">
-                                {{ c.name }}
-                            </div>
-
-                            <div class="team-code">
-                                {{ c.email }}
-                            </div>
-
-                            <div class="team-dept">
-                                {{ c.phone }}
-                            </div>
-
-                            <div class="team-title-small">
-                                {{ c.orders.length }} requests
-                            </div>
-
+                            <div class="team-name">{{ c.first_name }} {{c.last_name}}</div>
+                            <div class="team-code">{{ c.email }}</div>
                         </div>
 
                     </div>
@@ -100,32 +292,15 @@
 
                 <div class="pagination-bar">
 
-                    <button
-                        class="btn btn-outline-navy"
-                        (click)="prevPage()">
+                    <button class="btn btn-outline-navy" (click)="prevPage()">Prev</button>
 
-                        Prev
+                    <span>Page {{ currentPage }}</span>
 
-                    </button>
-
-                    <span>
-                        Page {{ currentPage }}
-                    </span>
-
-                    <button
-                        class="btn btn-outline-navy"
-                        (click)="nextPage()">
-
-                        Next
-
-                    </button>
+                    <button class="btn btn-outline-navy" (click)="nextPage()">Next</button>
 
                 </div>
 
-                <button
-                    class="floating-btn"
-                    data-bs-toggle="modal"
-                    data-bs-target="#newTrackModal">
+                <button class="floating-btn" data-bs-toggle="modal" data-bs-target="#newTrackModal">
 
                     +
 
@@ -133,42 +308,30 @@
 
             </div>
 
-            <!-- CUSTOMER DETAIL -->
-
             <div *ngIf="selectedCustomer && !selectedOrder">
 
-                <button
-                    class="btn btn-sm btn-outline-secondary mb-3"
-                    (click)="backToCustomers()">
+                <button class="btn btn-sm btn-outline-secondary mb-3" (click)="backToCustomers()">
 
                     Back
 
                 </button>
 
-                <h5>
+                <h5 class="mb-3">
                     {{ selectedCustomer.name }}
                 </h5>
 
-                <div class="row g-3 mt-2">
+                <div class="row g-3">
 
-                    <div
-                        class="col-md-3"
-                        *ngFor="let o of selectedCustomer.orders">
+                    <div class="col-md-4" *ngFor="let o of selectedCustomerOrders">
 
-                        <div
-                            class="allocation-card"
-                            (click)="openOrder(o)">
+                        <div class="team-card" (click)="openOrder(o)">
 
-                            <div class="allocation-code">
-                                {{ o.orderNumber }}
+                            <div class="team-name">
+                                {{ o.order_number }}
                             </div>
 
-                            <div class="allocation-name">
-                                {{ o.status }}
-                            </div>
-
-                            <div class="allocation-percent">
-                                {{ o.createdAt | date:'short' }}
+                            <div class="team-title-small">
+                                Request ID: {{ o.id_customer }}
                             </div>
 
                         </div>
@@ -179,38 +342,38 @@
 
             </div>
 
-            <!-- HISTORY DETAIL -->
-
             <div *ngIf="selectedOrder">
 
-                <button
-                    class="btn btn-sm btn-outline-secondary mb-3"
-                    (click)="backToOrders()">
+                <button class="btn btn-sm btn-outline-secondary mb-3" (click)="backToOrders()">
 
                     Back
 
                 </button>
 
-                <div class="history-card">
+                <div class="row g-3">
 
-                    <div>
-                        <strong>Order:</strong>
-                        {{ selectedOrder.orderNumber }}
-                    </div>
+                    <div class="col-md-4" *ngFor="let ot of selectedOrderTrackings ">
 
-                    <div>
-                        <strong>Case:</strong>
-                        {{ selectedOrder.caseNumber }}
-                    </div>
+                        <div class="team-card" (click)="openTracking(ot)">
 
-                    <div>
-                        <strong>Status:</strong>
-                        {{ selectedOrder.status }}
-                    </div>
+                            <div class="team-name">
+                                {{ ot.uid }}
+                            </div>
 
-                    <div>
-                        <strong>Requested:</strong>
-                        {{ selectedOrder.createdAt | date:'medium' }}
+                            <div class="team-title-small">
+                                Created At: {{ ot.created_at }}
+                            </div>
+
+                            <div class="team-title-small">
+                                Origin: {{ ot.origin }}
+                            </div>
+
+                            <div class="team-title-small">
+                                Status: {{ ot.status }}
+                            </div>
+
+                        </div>
+
                     </div>
 
                 </div>
@@ -224,115 +387,58 @@
 </div>
 
 <!-- ===================================================== -->
-<!-- RECURSIVE TABLE -->
+<!-- RECURSIVE TEMPLATE -->
 <!-- ===================================================== -->
 
-<ng-template
-    #recursiveTemplate
-    let-data
-    let-path="path">
-
-    <!-- OBJECT -->
+<ng-template #recursiveTemplate let-data let-path="path">
 
     <div *ngIf="isObject(data)">
 
-        <div
-            *ngFor="let key of getObjectKeys(data)"
-            class="json-row">
+        <div *ngFor="let key of getObjectKeys(data)" class="json-row">
 
-            <!-- HEADER -->
-
-            <div
-                class="json-header"
-                [class.clickable]="hasChildren(data[key])"
-                (click)="
-                    hasChildren(data[key])
-                    &&
-                    toggleNode(path + '-' + key)
-                ">
+            <div class="json-header" [class.clickable]="hasChildren(data[key])"
+                (click)="hasChildren(data[key]) && toggleNode(path + '-' + key)">
 
                 <div class="json-key">
 
-                    <span
-                        *ngIf="hasChildren(data[key])"
-                        class="collapse-icon">
-
-                        {{
-                            isCollapsed(path + '-' + key)
-                            ? '+'
-                            : '-'
-                        }}
-
+                    <span *ngIf="hasChildren(data[key])" class="collapse-icon">
+                        {{ isCollapsed(path + '-' + key) ? '+' : '-' }}
                     </span>
 
                     {{ key }}
 
                 </div>
 
-                <div
-                    class="json-value"
-                    *ngIf="isPrimitive(data[key])">
-
+                <div class="json-value" *ngIf="isPrimitive(data[key])">
                     {{ data[key] }}
-
                 </div>
 
             </div>
 
-            <!-- CONTENT -->
+            <div class="json-content" *ngIf="hasChildren(data[key]) && !isCollapsed(path + '-' + key)">
 
-            <div
-                class="json-content"
-                *ngIf="
-                    hasChildren(data[key])
-                    &&
-                    !isCollapsed(path + '-' + key)
-                ">
+                <ng-container *ngIf="isObject(data[key])">
 
-                <!-- OBJECT -->
-
-                <ng-container
-                    *ngIf="isObject(data[key])">
-
-                    <ng-container
-                        *ngTemplateOutlet="
-                            recursiveTemplate;
-                            context: {
-                                $implicit: data[key],
-                                path: path + '-' + key
-                            }
-                        ">
+                    <ng-container *ngTemplateOutlet="recursiveTemplate;
+                        context: {
+                            $implicit: data[key],
+                            path: path + '-' + key
+                        }">
                     </ng-container>
 
                 </ng-container>
 
-                <!-- ARRAY -->
+                <ng-container *ngIf="isArray(data[key])">
 
-                <ng-container
-                    *ngIf="isArray(data[key])">
+                    <div *ngFor="let item of data[key]; let i = index" class="array-item">
 
-                    <div
-                        *ngFor="
-                            let item of data[key];
-                            let i = index
-                        "
-                        class="array-item">
+                        <div class="array-label">[{{ i }}]</div>
 
-                        <div
-                            class="array-label">
-
-                            [{{ i }}]
-
-                        </div>
-
-                        <ng-container
-                            *ngTemplateOutlet="
-                                recursiveTemplate;
-                                context: {
-                                    $implicit: item,
-                                    path: path + '-' + key + '-' + i
-                                }
-                            ">
+                        <ng-container *ngTemplateOutlet="recursiveTemplate;
+                            context: {
+                                $implicit: item,
+                                path: path + '-' + key + '-' + i
+                            }">
                         </ng-container>
 
                     </div>
@@ -351,135 +457,91 @@
 <!-- MODAL -->
 <!-- ===================================================== -->
 
-<div
-    class="modal fade"
-    id="newTrackModal"
-    tabindex="-1"
-    aria-hidden="true">
+<div class="modal fade" id="newTrackModal" tabindex="-1" aria-hidden="true">
 
-    <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
 
         <div class="modal-content">
 
             <div class="modal-header">
-
-                <h5 class="modal-title">
-                    New Track
-                </h5>
-
-                <button
-                    type="button"
-                    class="btn-close btn-close-white"
-                    data-bs-dismiss="modal">
-                </button>
-
+                <h5 class="modal-title">New Track</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
             <div class="modal-body">
 
                 <div class="mb-3">
+                    <label class="form-label fw-bold">Brand</label>
 
-                    <label class="form-label fw-bold">
-                        Order #
-                    </label>
+                    <select class="form-select" [(ngModel)]="selectedBrandId">
+                        <option *ngFor="let brand of userBrands" [value]="brand.id.toString()">
+                            {{ brand.name }}
+                        </option>
+                    </select>
+                </div>
 
-                    <input
-                        type="text"
-                        class="form-control"
-                        [(ngModel)]="newOrderNumber" />
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Order #</label>
+                        <input type="text" class="form-control" [(ngModel)]="newOrderNumber" />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Case #</label>
+                        <input type="text" class="form-control" [(ngModel)]="newCaseNumber" />
+                    </div>
 
                 </div>
 
                 <div class="mb-3">
-
-                    <label class="form-label fw-bold">
-                        Zip Code
-                    </label>
-
-                    <input
-                        type="text"
-                        class="form-control"
-                        [(ngModel)]="newZipCode" />
-
+                    <label class="form-label fw-bold">Email Address</label>
+                    <input type="text" class="form-control" [(ngModel)]="newEmailAddress" />
                 </div>
 
-                <div class="mb-3">
+                <div class="row">
 
-                    <label class="form-label fw-bold">
-                        Case #
-                    </label>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Postal Code</label>
+                        <input type="text" class="form-control" [(ngModel)]="newPostalCode" />
+                    </div>
 
-                    <input
-                        type="text"
-                        class="form-control"
-                        [(ngModel)]="newCaseNumber" />
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Zip Code</label>
+                        <input type="text" class="form-control" [(ngModel)]="newZipCode" />
+                    </div>
 
                 </div>
 
                 <div class="coral-separator"></div>
 
                 <div class="form-check mb-2">
-
-                    <input
-                        class="form-check-input"
-                        type="checkbox"
-                        [(ngModel)]="agentEncouraged" />
-
-                    <label class="form-check-label">
-                        Agent explained self-service
-                    </label>
-
+                    <input class="form-check-input" type="checkbox" [(ngModel)]="agentEncouraged" />
+                    <label class="form-check-label">Agent explained self-service</label>
                 </div>
 
                 <div class="form-check mb-3">
-
-                    <input
-                        class="form-check-input"
-                        type="checkbox"
-                        [(ngModel)]="customerKnew" />
-
-                    <label class="form-check-label">
-                        Customer already knew self-service
-                    </label>
-
+                    <input class="form-check-input" type="checkbox" [(ngModel)]="customerKnew" />
+                    <label class="form-check-label">Customer already knew self-service</label>
                 </div>
 
                 <div class="mb-3">
-
-                    <label class="form-label fw-bold">
-                        Comments
-                    </label>
-
-                    <textarea
-                        class="form-control"
-                        rows="3"
-                        maxlength="200"
-                        [(ngModel)]="customerComments">
-                    </textarea>
-
+                    <label class="form-label fw-bold">Comments</label>
+                    <textarea class="form-control" rows="3" maxlength="200" [(ngModel)]="customerComments"></textarea>
                 </div>
 
             </div>
 
             <div class="modal-footer">
-
-                <button
-                    class="btn btn-outline-secondary"
-                    data-bs-dismiss="modal">
-
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
                     Cancel
-
                 </button>
 
-                <button
-                    class="btn btn-outline-coral"
-                    [disabled]="!newOrderNumber || loadingOms"
-                    (click)="createTrack()">
+                <button class="btn btn-outline-coral" [disabled]="!isFilled()" (click)="createTrack()">
 
                     {{ loadingOms ? 'Loading...' : 'Generate' }}
 
                 </button>
-
             </div>
 
         </div>

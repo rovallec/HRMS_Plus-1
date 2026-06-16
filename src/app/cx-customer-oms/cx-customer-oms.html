@@ -6,14 +6,14 @@
     <div class="brand-divider"></div>
   </div>
 
-  <!-- ===== MAIN CARD ===== -->
-  <div class="container d-flex justify-content-center align-items-center">
+  <!-- ===== CONTENT AREA ===== -->
+  <div class="content-wrapper">
 
     <div class="card shadow-lg tracking-card">
 
-      <div class="row g-0">
+      <div class="row g-0 h-100">
 
-        <!-- LEFT: LOGO -->
+        <!-- ================= LEFT SIDE ================= -->
         <div class="col-md-4 logo-side d-flex align-items-center justify-content-center">
           <img
             src="//www.colehaan.com/cdn/shop/files/ColeHaan_NewYork_Logotype.svg?height=36&v=1757686074"
@@ -22,8 +22,8 @@
           />
         </div>
 
-        <!-- RIGHT: ORDER INFO -->
-        <div class="col-md-8 p-4">
+        <!-- ================= RIGHT SIDE ================= -->
+        <div class="col-md-8 p-4 content-scroll">
 
           <!-- ⏳ Loading -->
           <div *ngIf="isLoading" class="text-center py-4">
@@ -45,28 +45,63 @@
 
             <div class="blue-separator"></div>
 
-            <!-- CUSTOMER -->
+            <!-- ================= ORDER BASIC ================= -->
             <div class="mb-3">
-              <p><strong>Name:</strong> {{ customerData.name }}</p>
-              <p><strong>Email:</strong> {{ customerData.email }}</p>
-              <p><strong>Phone:</strong> {{ customerData.phone }}</p>
+              <p><strong>Order #:</strong> {{ orderData?.orderNumber }}</p>
+              <p><strong>Placed At:</strong> {{ orderData?.placedAt }}</p>
+              <p><strong>Updated At:</strong> {{ orderData?.updatedAt }}</p>
             </div>
 
             <div class="coral-separator"></div>
 
-            <!-- ORDER -->
-            <div>
-              <p><strong>Order #:</strong> {{ orderData.orderNumber }}</p>
-              <p><strong>Zip Code:</strong> {{ orderData.zipCode }}</p>
+            <!-- ================= STATUS ================= -->
+            <div class="mb-3">
+              <h4 class="mb-3 section-title">Status</h4>
+
+              <p><strong>Summary:</strong> {{ orderData?.status?.summary }}</p>
+              <p><strong>Fulfillment:</strong> {{ orderData?.status?.fulfillment }}</p>
+              <p><strong>Financial:</strong> {{ orderData?.status?.financial }}</p>
+              <p><strong>Export:</strong> {{ orderData?.status?.export }}</p>
 
               <p>
-                <strong>Status:</strong>
-                <span class="badge bg-dark">
-                  {{ orderData.status }}
-                </span>
+                <strong>Cancelled:</strong>
+                {{ orderData?.status?.cancelled }}
               </p>
 
-              <p><strong>Date:</strong> {{ orderData.date }}</p>
+              <p *ngIf="orderData?.status?.cancelled">
+                <strong>Cancelled At:</strong>
+                {{ orderData?.status?.cancelledAt }}
+              </p>
+
+              <p *ngIf="orderData?.status?.cancelled">
+                <strong>Cancel Reason:</strong>
+                {{ orderData?.status?.cancelReason }}
+              </p>
+            </div>
+
+            <div class="coral-separator"></div>
+
+            <!-- ================= CUSTOMER ================= -->
+            <div class="mb-3">
+              <h4 class="mb-3 section-title">Customer</h4>
+
+              <p>
+                <strong>Name:</strong>
+                {{ orderData?.customer?.firstName }}
+                {{ orderData?.customer?.lastName }}
+              </p>
+            </div>
+
+            <div class="coral-separator"></div>
+
+            <!-- ================= SHIPPING ================= -->
+            <div class="mb-3">
+              <h4 class="mb-3 section-title">Shipping Address</h4>
+
+              <p><strong>City:</strong> {{ orderData?.shippingAddress?.city }}</p>
+              <p><strong>State:</strong> {{ orderData?.shippingAddress?.provinceCode }}</p>
+              <p><strong>Country:</strong> {{ orderData?.shippingAddress?.countryCode }}</p>
+              <p><strong>Postal Code:</strong> {{ orderData?.shippingAddress?.postalCode }}</p>
             </div>
 
           </div>

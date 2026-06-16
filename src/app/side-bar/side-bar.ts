@@ -12,6 +12,8 @@ import { AppeasementService } from '../services/appeasement.service';
 })
 export class SideBar {
 
+  sidebarOpen = false;
+
   constructor(private api: AppeasementService) {}
 
   // =========================================================
@@ -48,5 +50,10 @@ export class SideBar {
     }
 
   }
+
+  
+toggleSidebar() {
+  this.sidebarOpen = !this.sidebarOpen;
+}
 
 }

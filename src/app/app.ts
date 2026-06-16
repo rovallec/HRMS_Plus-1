@@ -18,4 +18,7 @@ export class App {
   isLoginPage(): boolean {
     return this.router.url.includes('/login');
   }
+isCustomerOMS(): boolean {
+  return this.router.url.includes('/customer/');
+}
 }

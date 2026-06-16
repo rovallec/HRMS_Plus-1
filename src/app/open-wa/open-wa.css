@@ -1,0 +1,43 @@
+.container {
+  padding: 20px;
+  font-family: Arial;
+}
+
+.actions button {
+  margin-right: 10px;
+}
+
+.chat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 400px;
+}
+
+input, textarea {
+  padding: 10px;
+  font-size: 14px;
+}
+
+textarea {
+  height: 100px;
+}
+
+button {
+  padding: 10px;
+  cursor: pointer;
+}
+
+img {
+  width: 250px;
+  border: 1px solid #ccc;
+}
+
+.logs {
+  background: #111;
+  color: #0f0;
+  padding: 10px;
+  height: 200px;
+  overflow: auto;
+  font-size: 12px;
+}

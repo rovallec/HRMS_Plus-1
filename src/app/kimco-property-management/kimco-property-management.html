@@ -1,0 +1,420 @@
+<div class="section">
+
+  <!-- TITLE -->
+  <h3 class="agent-title">Property Management</h3>
+  <div class="agent-underline"></div>
+
+  <!-- HEADER -->
+  <div class="header-row">
+
+    <div class="header-card">
+      <div class="label">BUILDING</div>
+      <div class="value">{{ data?.building?.name }}</div>
+      <div class="sub">{{ data?.building?.city }}, {{ data?.building?.state }}</div>
+    </div>
+
+    <div class="header-card">
+      <div class="label">TENANT</div>
+      <div class="value">{{ data?.tenant?.dba }}</div>
+      <div class="sub">Unit {{ data?.tenant?.unit_id }}</div>
+      <div class="sub">Type {{ data?.tenant?.business_type1 }}</div>
+      <div class="sub">Sub-Type {{ data?.tenant?.business_type2 }}</div>
+      <div class="sub">Lease End Date {{ data?.tenant?.lease_end_date }}</div>
+    </div>
+
+  </div>
+
+  <!-- Search -->
+  <div class="search-container">
+
+  <input
+    class="search-input"
+    type="text"
+    [(ngModel)]="searchText"
+    (keyup.enter)="runSearch()"
+    placeholder="Search property information..." />
+
+  <button
+    class="search-btn"
+    (click)="runSearch()">
+
+    <i class="bi bi-search"></i>
+    Search
+
+  </button>
+
+</div>
+
+  <!-- GRID -->
+  <div class="cards-grid">
+
+    <!-- LEASE PERSONNEL -->
+    <div class="module-card">
+      <div class="card-title">Lease Personnel</div>
+
+      <div class="card-body">
+        <div class="mini-card" *ngFor="let p of slice(data?.lease_personnel)" (click)="openModal('Lease Personnel', p)">
+          <div class="primary">{{ p.name }}</div>
+          <div class="secondary">{{ p.role }}</div>
+        </div>
+      </div>
+
+      <button class="see-more" (click)="openModal('Lease Personnel', data?.lease_personnel)">
+        <i class="bi bi-eye"></i>
+      </button>
+    </div>
+
+    <!-- VENDORS -->
+    <div class="module-card">
+      <div class="card-title">Vendors</div>
+
+      <div class="card-body">
+        <div class="mini-card" *ngFor="let v of slice(data?.vendors)" (click)="openModal('Vendors', v)">
+          <div class="primary">{{ v.vendor_name }}</div>
+          <div class="secondary">{{ v.type }}</div>
+        </div>
+      </div>
+
+      <button class="see-more" (click)="openModal('Vendors', data?.vendors)">
+        <i class="bi bi-eye"></i>
+      </button>
+    </div>
+
+    <!-- UTILITIES -->
+    <div class="module-card">
+      <div class="card-title">Utility Providers</div>
+
+      <div class="card-body">
+        <div class="mini-card" *ngFor="let u of slice(data?.utility_providers)"
+          (click)="openModal('Utility Providers', u)">
+          <div class="primary">{{ u.utility_type }}</div>
+          <div class="secondary">{{ u.vendor_name }}</div>
+        </div>
+      </div>
+
+      <button class="see-more" (click)="openModal('Utility Providers', data?.utility_providers)">
+        <i class="bi bi-eye"></i>
+      </button>
+    </div>
+
+    <!-- CONTACTS -->
+    <div class="module-card">
+      <div class="card-title">Contacts</div>
+
+      <div class="card-body">
+        <div class="mini-card" *ngFor="let c of slice(data?.contacts)" (click)="openModal('Contacts', c)">
+          <div class="primary">{{ c.name }}</div>
+          <div class="secondary">{{ c.role }} · {{ c.work_phone }}</div>
+        </div>
+      </div>
+
+      <button class="see-more" (click)="openModal('Contacts', data?.contacts)">
+        <i class="bi bi-eye"></i>
+      </button>
+    </div>
+
+    <!-- EMERGENCY -->
+    <div class="module-card">
+      <div class="card-title">Emergency Responders</div>
+
+      <div class="card-body">
+        <div class="mini-card" *ngFor="let e of slice(data?.emergency_responders)"
+          (click)="openModal('Emergency Responders', e)">
+          <div class="primary">{{ e.account_name }}</div>
+          <div class="secondary">{{ e.type }} · {{ e.phone }}</div>
+        </div>
+      </div>
+
+      <button class="see-more" (click)="openModal('Emergency Responders', data?.emergency_responders)">
+        <i class="bi bi-eye"></i>
+      </button>
+    </div>
+
+    <!-- NOTES -->
+    <div class="module-card">
+      <div class="card-title">Building Notes</div>
+
+      <div class="card-body">
+        <div class="mini-card notes" *ngFor="let n of slice(data?.building_notes)"
+          (click)="openModal('Building Notes', n)">
+          <div class="primary">{{ n.title }}</div>
+          <div class="secondary">{{ n.description }}</div>
+        </div>
+      </div>
+
+      <button class="see-more" (click)="openModal('Building Notes', data?.building_notes)">
+        <i class="bi bi-eye"></i>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= MODAL ================= -->
+
+<div class="modal-backdrop" *ngIf="selectedType" (click)="closeModal()"></div>
+
+<div class="custom-modal" *ngIf="selectedType">
+
+  <div class="modal-header">
+    <h5>{{ selectedType }}</h5>
+    <button class="close-btn" (click)="closeModal()">×</button>
+  </div>
+
+  <div class="modal-body">
+
+    <!-- LEASE PERSONNEL -->
+    <ng-container *ngIf="selectedType === 'Lease Personnel'">
+
+      <div *ngIf="modalMode === 'single'">
+        <p><b>Name:</b> {{ selectedItem?.name }}</p>
+        <p><b>Role:</b> {{ selectedItem?.role }}</p>
+        <p><b>Email:</b> {{ selectedItem?.email }}</p>
+        <p><b>Phone:</b> {{ selectedItem?.phone }}</p>
+      </div>
+
+      <div *ngIf="modalMode === 'list'">
+        <div *ngFor="let i of selectedList">
+          <hr>
+          <p><b>Name:</b> {{ i?.name }}</p>
+          <p><b>Role:</b> {{ i?.role }}</p>
+          <p><b>Email:</b> {{ i?.email }}</p>
+          <p><b>Phone:</b> {{ i?.phone }}</p>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- VENDORS -->
+    <ng-container *ngIf="selectedType === 'Vendors'">
+
+      <div *ngIf="modalMode === 'single'">
+        <p><b>Vendor:</b> {{ selectedItem?.vendor_name }}</p>
+        <p><b>Type:</b> {{ selectedItem?.type }}</p>
+        <p><b>Street:</b> {{ selectedItem?.street }}</p>
+        <p><b>City:</b> {{ selectedItem?.city }}</p>
+        <p><b>State:</b> {{ selectedItem?.state }}</p>
+        <p><b>Zip Code:</b> {{ selectedItem?.zip_code }}</p>
+        <p><b>Phone Number:</b> {{ selectedItem?.phone_number }}</p>
+        <p><b>Notes:</b> {{ selectedItem?.notes }}</p>
+      </div>
+
+      <div *ngIf="modalMode === 'list'">
+        <div *ngFor="let i of selectedList">
+          <hr>
+          <p><b>Vendor:</b> {{ i?.vendor_name }}</p>
+          <p><b>Type:</b> {{ i?.type }}</p>
+          <p><b>Street:</b> {{ i?.street }}</p>
+          <p><b>City:</b> {{ i?.city }}</p>
+          <p><b>State:</b> {{ i?.state }}</p>
+          <p><b>Zip Code:</b> {{ i?.zip_code }}</p>
+          <p><b>Phone Number:</b> {{ i?.phone_number }}</p>
+          <p><b>Notes:</b> {{ i?.notes }}</p>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- UTILITIES -->
+    <ng-container *ngIf="selectedType === 'Utility Providers'">
+
+      <div *ngIf="modalMode === 'single'">
+        <p><b>Utility:</b> {{ selectedItem?.utility_type }}</p>
+        <p><b>Vendor:</b> {{ selectedItem?.vendor_name }}</p>
+        <p><b>Phone:</b> {{ selectedItem?.phone_number }}</p>
+        <p><b>City:</b> {{ selectedItem?.city }}</p>
+        <p><b>Notes:</b> {{ selectedItem?.notes }}</p>
+      </div>
+
+      <div *ngIf="modalMode === 'list'">
+        <div *ngFor="let i of selectedList">
+          <hr>
+          <p><b>Utility:</b> {{ i?.utility_type }}</p>
+          <p><b>Vendor:</b> {{ i?.vendor_name }}</p>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- CONTACTS -->
+    <ng-container *ngIf="selectedType === 'Contacts'">
+
+      <div *ngIf="modalMode === 'single'">
+        <p><b>Name:</b> {{ selectedItem?.name }}</p>
+        <p><b>Role:</b> {{ selectedItem?.role }}</p>
+        <p><b>Work:</b> {{ selectedItem?.work_phone }}</p>
+        <p><b>Mobile:</b> {{ selectedItem?.mobile_phone }}</p>
+        <p><b>Email:</b> {{ selectedItem?.email }}</p>
+      </div>
+
+      <div *ngIf="modalMode === 'list'">
+        <div *ngFor="let i of selectedList">
+          <hr>
+          <p><b>Name:</b> {{ i?.name }}</p>
+          <p><b>Role:</b> {{ i?.role }}</p>
+          <p><b>Work:</b> {{ i?.work_phone }}</p>
+          <p><b>Mobile:</b> {{ i?.mobile_phone }}</p>
+          <p><b>Email:</b> {{ i?.email }}</p>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- EMERGENCY -->
+    <ng-container *ngIf="selectedType === 'Emergency Responders'">
+
+      <div *ngIf="modalMode === 'single'">
+        <p><b>Name:</b> {{ selectedItem?.account_name }}</p>
+        <p><b>Type:</b> {{ selectedItem?.type }}</p>
+        <p><b>Phone:</b> {{ selectedItem?.phone }}</p>
+      </div>
+
+      <div *ngIf="modalMode === 'list'">
+        <div *ngFor="let i of selectedList">
+          <hr>
+          <p><b>Name:</b> {{ i?.account_name }}</p>
+          <p><b>Type:</b> {{ i?.type }}</p>
+          <p><b>Phone:</b> {{ i?.phone }}</p>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- NOTES -->
+    <ng-container *ngIf="selectedType === 'Building Notes'">
+
+      <div *ngIf="modalMode === 'single'">
+        <p><b>Title:</b> {{ selectedItem?.title }}</p>
+        <p><b>Description:</b> {{ selectedItem?.description }}</p>
+        <p><b>Updated:</b> {{ selectedItem?.last_updated | date:'short' }}</p>
+      </div>
+
+      <div *ngIf="modalMode === 'list'">
+        <div *ngFor="let i of selectedList">
+          <hr>
+          <p><b>Title:</b> {{ i?.title }}</p>
+          <p><b>Description:</b> {{ i?.description }}</p>
+          <p><b>Updated:</b> {{ i?.last_updated | date:'short' }}</p>
+        </div>
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>
+
+<!-- SEARCH MODAL -->
+
+<div
+  class="search-modal-backdrop"
+  *ngIf="showSearchModal"
+  (click)="closeSearchModal()">
+</div>
+
+<div
+  class="custom-search-modal search-modal"
+  *ngIf="showSearchModal">
+
+  <div class="search-modal-header">
+
+    <h5>Search Results</h5>
+
+    <button
+      class="close-btn"
+      (click)="closeSearchModal()">
+
+      ×
+
+    </button>
+
+  </div>
+
+  <div class="search-modal-body">
+
+    <div
+      class="empty-search"
+      *ngIf="searchTree.length === 0">
+
+      No results found
+
+    </div>
+
+    <!-- GROUPS -->
+
+    <div
+      *ngFor="let group of searchTree"
+      class="tree-group">
+
+      <div
+        class="tree-group-header"
+        (click)="toggleGroup(group)">
+
+        <i
+          class="bi"
+          [class.bi-chevron-right]="!group.expanded"
+          [class.bi-chevron-down]="group.expanded">
+        </i>
+
+        {{ group.name }}
+        ({{ group.items.length }})
+
+      </div>
+
+      <div
+        *ngIf="group.expanded"
+        class="tree-items">
+
+        <div
+          *ngFor="let item of group.items">
+
+          <div
+            class="tree-item-header"
+            (click)="toggleItem(item)">
+
+            <i
+              class="bi"
+              [class.bi-chevron-right]="!item.expanded"
+              [class.bi-chevron-down]="item.expanded">
+            </i>
+
+            {{ item.title }}
+
+          </div>
+
+          <div
+            *ngIf="item.expanded"
+            class="tree-detail">
+
+            <div
+              *ngFor="let field of item.data | keyvalue">
+
+              <div
+                *ngIf="field.value">
+
+                <span class="field-name">
+
+                  {{ field.key }}
+
+                </span>
+
+                <span class="field-value">
+
+                  {{ field.value }}
+
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

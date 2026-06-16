@@ -5,9 +5,13 @@ import { Code } from '../models/code';
 
 @Injectable({ providedIn: 'root' })
 export class AppeasementService {
-  private readonly API_URL = 'https://my.cxperts.us/api/endpoints';
-  //private readonly API_URL = 'http://localhost/endpoints';
+  //private readonly API_URL = 'https://my.cxperts.us/api/endpoints';
+  private readonly API_URL = 'http://localhost/endpoints';
   private readonly GRAPH_URL = 'https://graph.microsoft.com/v1.0/me/photo/$value';
+
+  
+  // 👉 ideal: mover esto a environment.ts
+  private API_SECRET = 'rroFg1TWJ1%xNS';
 
   constructor(private http: HttpClient) {}
 
@@ -211,5 +215,152 @@ lookupMjOrder(orderNumber: string): Observable<any> {
 
   );
 
+}
+
+// =========================================================
+// ColeHaan OMS
+// =========================================================
+
+lookupCOLUSOrder(orderNumber: string, email:string, postalCode:string, zip:string): Observable<any> {
+
+  return this.http.post<any>(
+
+    `${this.API_URL}/getOrderCOLUS.php`,
+
+    {
+      orderNumber,
+      email,
+      postalCode,
+      zip
+    }
+
+  );
+
+}
+
+// ===============================
+// OMS Management
+// ===============================
+getCustomers(): Observable<any> {
+
+  return this.http.get<any>(
+    `${this.API_URL}/getCustomers.php`
+  );
+
+}
+
+getOrders(idCustomer: number): Observable<any> {
+  return this.http.get<any>(
+    `${this.API_URL}/getOrders.php?id_customer=${idCustomer}`
+  );
+}
+
+getTrackings(idOrder: number): Observable<any> {
+  return this.http.get<any>(
+    `${this.API_URL}/getTrackings.php?id_order=${idOrder}`
+  );
+}
+
+saveResult(payload: any): Observable<any> {
+  return this.http.post<any>(
+    `${this.API_URL}/saveResult.php`,
+    payload
+  );
+}
+
+getTrackingByToken(token: string): Observable<any> {
+
+  return this.http.post<any>(
+    `${this.API_URL}/getTrackingByToken.php`,
+    { token }
+  );
+
+}
+// ===============================
+// PROPERTY MANAGEMENT (SECURE FINAL)
+// ===============================
+getKimcoPropertyManagement(payload: {
+  buildingId: string,
+  tenantId?: string
+}) {
+
+  return new Observable<any>(observer => {
+
+    (async () => {
+
+      try {
+
+        const body = {
+          buildingId: payload.buildingId,
+          tenantId: payload.tenantId ?? null,
+          timestamp: Date.now()
+        };
+
+        const signature = await this.generateSignature(body);
+
+        const headers = {
+          'Content-Type': 'application/json',
+          'X-SIGNATURE': signature
+        };
+
+        this.http.post(
+          `${this.API_URL}/getKimcoPropertyManagement.php`,
+          body,
+          { headers }
+        ).subscribe({
+          next: res => {
+            observer.next(res);
+            observer.complete();
+          },
+          error: err => observer.error(err)
+        });
+
+      } catch (e) {
+        observer.error(e);
+      }
+
+    })();
+
+  });
+
+}
+
+private async generateSignature(payload: any): Promise<string> {
+
+  const secret = this.API_SECRET;
+  const encoder = new TextEncoder();
+
+  const canonicalString =
+    `buildingId=${payload.buildingId ?? ''}&` +
+    `tenantId=${payload.tenantId ?? ''}&` +
+    `timestamp=${payload.timestamp ?? ''}`;
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+
+  const signatureBuffer = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(canonicalString)
+  );
+
+  return btoa(String.fromCharCode(...new Uint8Array(signatureBuffer)));
+}
+
+private buildCanonicalPayload(payload: {
+  buildingId: string;
+  tenantId?: string;
+}) {
+
+  return {
+    buildingId: payload.buildingId,
+    tenantId: payload.tenantId ?? null,
+    timestamp: Date.now()
+  };
 }
 }

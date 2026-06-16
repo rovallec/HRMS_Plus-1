@@ -9,10 +9,12 @@ import { Bimi } from './bimi/bimi';
 import { KimcoCases } from './kimco-cases/kimco-cases';
 import { CxCustomerOMS } from './cx-customer-oms/cx-customer-oms';
 import { CxOms } from './cx-oms/cx-oms';
+import { KimcoPropertyManagement } from './kimco-property-management/kimco-property-management';
+import { OpenWA } from './open-wa/open-wa';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
-
+  { path: 'customer/:token', component: CxCustomerOMS },
   {
     path: '',
     canActivate: [AuthGuards],
@@ -25,6 +27,8 @@ export const routes: Routes = [
       { path: 'kimco', component: KimcoCases },
       { path: 'OMS', component: CxCustomerOMS },
       { path: 'cxOMS', component: CxOms },
+      { path: 'kimPm', component:KimcoPropertyManagement},
+      {path: 'openWA', component:OpenWA},
       { path: '', redirectTo: 'appeasement/codes', pathMatch: 'full' }
     ]
   },

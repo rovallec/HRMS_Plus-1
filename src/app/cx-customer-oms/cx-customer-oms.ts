@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { AppeasementService } from '../services/appeasement.service';
 
 @Component({
   selector: 'app-cx-customer-oms',
@@ -22,18 +23,51 @@ export class CxCustomerOMS implements OnInit {
   customerData: any = null;
   orderData: any = null;
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(private route: ActivatedRoute, private api: AppeasementService) {}
 
-  ngOnInit(): void {
-    this.token = this.route.snapshot.paramMap.get('token');
+ngOnInit(): void {
+  this.token = this.route.snapshot.paramMap.get('token');
 
-    if (!this.token) {
-      this.handleInvalidToken('Invalid access link.');
-      return;
-    }
-
-    this.validateToken(this.token);
+  if (!this.token) {
+    this.handleInvalidToken('Invalid access link.');
+    return;
   }
+
+  this.loadTracking(this.token);
+}
+
+  loadTracking(token: string) {
+
+  this.isLoading = true;
+  this.isValidToken = false;
+  this.errorMessage = '';
+
+  this.api.getTrackingByToken(token)
+    .subscribe({
+      next: (res: any) => {
+
+  console.log('TRACKING RESPONSE:', res);
+
+  if (!res.success) {
+    this.handleInvalidToken(res.error || 'Invalid or expired link.');
+    return;
+  }
+
+  // 🔥 FIX: backend no usa "payload", usa "data" o "order"
+const payload = res.payload;
+this.orderData = payload.order;
+
+  this.isValidToken = true;
+  this.isLoading = false;
+},
+
+      error: (err) => {
+        console.error(err);
+        this.handleInvalidToken('Server error or invalid request.');
+      }
+
+    });
+}
 
   // 🔥 Simulación de validación (reemplazar con API)
   validateToken(token: string) {

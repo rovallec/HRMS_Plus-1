@@ -14,15 +14,18 @@ export class CxOms implements OnInit {
 
   constructor(
     private appeasementService: AppeasementService
-  ) {}
+  ) { }
 
   customers: any[] = [];
   filteredCustomers: any[] = [];
+  selectedCustomerOrders: any[] = [];
+  selectedOrderTrackings: any[] = [];
 
   selectedCustomer: any = null;
   selectedOrder: any = null;
 
   liveOrderResult: any = null;
+  storedOrderResult: boolean = false;
 
   searchTerm: string = '';
 
@@ -32,6 +35,8 @@ export class CxOms implements OnInit {
   loadingOms = false;
 
   newOrderNumber: string = '';
+  newPostalCode: string = '';
+  newEmailAddress: string = '';
   newZipCode: string = '';
   newCaseNumber: string = '';
 
@@ -39,13 +44,30 @@ export class CxOms implements OnInit {
   customerKnew: boolean = false;
   customerComments: string = '';
 
+  userBrands: { id: number; name: string }[] = [];
+  selectedBrandId: string = '';
+
+
   collapsedNodes: { [key: string]: boolean } = {};
+
+  currentUser: any = JSON.parse(localStorage.getItem('user') || '{}');
+
+  activeOmsTab: string = 'order';
 
   ngOnInit(): void {
 
-    this.customers = this.generateMockCustomers();
-    this.filteredCustomers = [...this.customers];
+    this.appeasementService.getCustomers().subscribe((res: any) => {
 
+      this.customers = res.data;
+      this.filteredCustomers = [...res.data];
+
+    });
+
+    this.userBrands = this.currentUser?.brands || [];
+
+    if (this.userBrands.length > 0) {
+      this.selectedBrandId = String(this.userBrands[0].id);
+    }
   }
 
   /* =====================================================
@@ -171,26 +193,61 @@ export class CxOms implements OnInit {
   ===================================================== */
 
   openCustomer(c: any) {
+    this.appeasementService.getOrders(c.id).subscribe((res: any) => {
+      this.selectedCustomerOrders = res.data;
+    })
     this.selectedCustomer = c;
   }
 
-  openOrder(o: any) {
-    this.selectedOrder = o;
+  openOrder(order: any) {
+
+    this.selectedOrder = order;
+
+    this.appeasementService
+      .getTrackings(order.id)
+      .subscribe((res: any) => {
+
+        this.selectedOrderTrackings = res.data;
+
+      });
+
+  }
+
+  openTracking(tracking: any) {
+
+    this.storedOrderResult = true;
+    this.selectedBrandId = '1';
+
+    let payload = tracking.payload;
+
+    if (typeof payload === 'string') {
+      payload = JSON.parse(payload);
+    }
+
+    this.liveOrderResult = payload;
   }
 
   backToCustomers() {
-
     this.selectedCustomer = null;
     this.selectedOrder = null;
+    this.storedOrderResult = false;
+    this.liveOrderResult = null;
 
   }
 
   backToOrders() {
+    this.selectedCustomer = null;
     this.selectedOrder = null;
+    this.storedOrderResult = false;
+    this.liveOrderResult = null;
   }
 
   closeLiveResult() {
+    this.selectedCustomer = null;
+    this.selectedOrder = null;
+    this.storedOrderResult = false;
     this.liveOrderResult = null;
+    this.activeOmsTab = 'order';
   }
 
   /* =====================================================
@@ -255,57 +312,138 @@ export class CxOms implements OnInit {
   }
 
   /* =====================================================
-     CREATE TRACK
-  ===================================================== */
+   CREATE TRACK
+===================================================== */
 
   createTrack() {
 
     this.loadingOms = true;
 
-    this.appeasementService
-      .lookupMjOrder(this.newOrderNumber)
-      .subscribe({
+    switch (this.selectedBrandId) {
 
-        next: (res) => {
+      case '1':
 
-          console.log('OMS RESPONSE', res);
+        this.appeasementService
+          .lookupCOLUSOrder(
+            this.newOrderNumber,
+            this.newEmailAddress,
+            this.newPostalCode,
+            this.newZipCode
+          )
+          .subscribe({
 
-          this.liveOrderResult = res;
+            next: (res) => {
+              this.liveOrderResult = res.data;
+              this.loadingOms = false;
 
-          this.loadingOms = false;
+              const modal =
+                document.getElementById(
+                  'newTrackModal'
+                );
 
-          const modal =
-            document.getElementById(
-              'newTrackModal'
-            );
+              if (modal) {
 
-          if (modal) {
+                const bootstrapModal =
+                  (window as any)
+                    .bootstrap
+                    .Modal
+                    .getInstance(modal);
 
-            const bootstrapModal =
-              (window as any)
-                .bootstrap
-                .Modal
-                .getInstance(modal);
+                bootstrapModal?.hide();
 
-            bootstrapModal?.hide();
+              }
 
-          }
+              // ======================================================
+              // SAVE RESULT (NEW STEP)
+              // ======================================================
+              console.log(res.data);
+              console.log(this.newOrderNumber);
+              this.appeasementService.saveResult({
+                oms: res.data,
+                orderNumber: this.newOrderNumber,
+                email: this.newEmailAddress,
+                origin: 'OMS',
+                httpCode: res.httpCode
+              }).subscribe({
+                next: (saveRes) => {
+                  console.log('SAVE RESULT OK', saveRes);
+                },
+                error: (err) => {
+                  console.error('SAVE RESULT FAILED', err);
+                }
 
-          this.resetForm();
+              });
 
-        },
+            },
 
-        error: (err) => {
+            error: (err) => {
 
-          console.error(err);
+              console.error(err);
 
-          this.loadingOms = false;
+              this.loadingOms = false;
 
-          alert('OMS lookup failed');
+              alert('OMS lookup failed');
 
-        }
+            }
+          });
+        break;
 
-      });
+      case '3':
+
+        this.appeasementService
+          .lookupMjOrder(this.newOrderNumber)
+          .subscribe({
+
+            next: (res) => {
+
+              console.log('OMS RESPONSE', res);
+
+              this.liveOrderResult = res;
+
+              this.loadingOms = false;
+
+              const modal =
+                document.getElementById(
+                  'newTrackModal'
+                );
+
+              if (modal) {
+
+                const bootstrapModal =
+                  (window as any)
+                    .bootstrap
+                    .Modal
+                    .getInstance(modal);
+
+                bootstrapModal?.hide();
+
+              }
+
+              this.resetForm();
+
+            },
+
+            error: (err) => {
+
+              console.error(err);
+
+              this.loadingOms = false;
+
+              alert('OMS lookup failed');
+
+            }
+
+          });
+
+        break;
+
+      default:
+
+        this.loadingOms = false;
+
+        break;
+
+    }
 
   }
 
@@ -321,4 +459,15 @@ export class CxOms implements OnInit {
 
   }
 
+  isFilled(): boolean {
+    switch (this.selectedBrandId) {
+      case '1':
+        return (!!this.newOrderNumber || !!this.newEmailAddress);
+        break;
+
+      default:
+        return false
+        break;
+    }
+  }
 }

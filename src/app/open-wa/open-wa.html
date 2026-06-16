@@ -1,0 +1,49 @@
+<div class="container">
+
+  <h2>OpenWA Chat Test</h2>
+
+  <div class="actions">
+    <button (click)="createSession()">1. Create Session</button>
+    <button (click)="startSession()" [disabled]="!sessionId">2. Start Session</button>
+    <button (click)="reset()">Reset</button>
+  </div>
+
+  <p><strong>Status:</strong> {{ status }}</p>
+  <p *ngIf="sessionId"><strong>Session:</strong> {{ sessionId }}</p>
+
+  <div *ngIf="qrImage">
+    <h3>Scan QR</h3>
+    <img [src]="qrImage" style="width:250px;height:250px;" />
+  </div>
+
+  <hr />
+
+  <h3>Send Message</h3>
+
+  <div class="chat-box">
+
+    <input
+      type="text"
+      placeholder="Phone number (502XXXXXXXX)"
+      [(ngModel)]="phoneNumber"
+    />
+
+    <textarea
+      placeholder="Message..."
+      [(ngModel)]="message"
+    ></textarea>
+
+    <button (click)="sendMessage()">
+      Send
+    </button>
+
+  </div>
+
+  <hr />
+
+  <h3>Logs</h3>
+  <div class="logs">
+    <div *ngFor="let l of logs">{{ l }}</div>
+  </div>
+
+</div>
