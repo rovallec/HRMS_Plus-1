@@ -260,7 +260,7 @@ $notes = safeFetchAll($conn, "
     SELECT title, description, last_updated
     FROM building_notes
     WHERE building_id = :id
-    ORDER BY created_at DESC
+    ORDER BY last_updated DESC
 ", ["id" => $internalBuildingId]);
 
 // =====================
