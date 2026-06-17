@@ -499,3 +499,20 @@ button {
     height: 85vh;
   }
 }
+
+/* ================= BUILDING NOTES OVERRIDE ================= */
+
+.mini-card.notes:hover {
+  background: #fff7f6; /* soft tint, no white-out */
+  border-color: #f25c54;
+  transform: translateY(-1px);
+}
+
+/* mantener legibilidad en notes */
+.mini-card.notes:hover .primary {
+  color: #0b1d39;
+}
+
+.mini-card.notes:hover .secondary {
+  color: #6b7280;
+}
