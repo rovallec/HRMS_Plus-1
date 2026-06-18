@@ -138,7 +138,7 @@
         <div class="mini-card notes" *ngFor="let n of slice(data?.building_notes)"
           (click)="openModal('Building Notes', n)">
           <div class="primary">{{ n.title }}</div>
-          <div class="secondary">{{ n.description }}</div>
+          <div class="secondary" [innerHTML]="n.description"></div>
         </div>
       </div>
 
@@ -285,15 +285,17 @@
 
       <div *ngIf="modalMode === 'single'">
         <p><b>Title:</b> {{ selectedItem?.title }}</p>
-        <p><b>Description:</b> {{ selectedItem?.description }}</p>
-        <p><b>Updated:</b> {{ selectedItem?.last_updated | date:'short' }}</p>
+          <p><b>Description:</b></p>
+          <div [innerHTML]="selectedItem?.description"></div> 
+          <p><b>Updated:</b> {{ selectedItem?.last_updated | date:'short' }}</p>
       </div>
 
       <div *ngIf="modalMode === 'list'">
         <div *ngFor="let i of selectedList">
           <hr>
           <p><b>Title:</b> {{ i?.title }}</p>
-          <p><b>Description:</b> {{ i?.description }}</p>
+          <p><b>Description:</b></p>
+          <div [innerHTML]="i?.description"></div>        
           <p><b>Updated:</b> {{ i?.last_updated | date:'short' }}</p>
         </div>
       </div>
