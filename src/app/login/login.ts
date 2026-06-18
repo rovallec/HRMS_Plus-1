@@ -44,7 +44,7 @@ export class LoginComponent implements OnInit {
           localStorage.setItem('refresh_token', user.refresh_token);
         }
 
-        this.router.navigate(['/appeasement/codes']);
+      this.navigateAfterLogin(user);
         return;
       } catch (e) {
         console.error('Invalid token from SSO callback:', e);
@@ -75,7 +75,7 @@ export class LoginComponent implements OnInit {
           this.stage = 'password';
         } else if (res.status === 'ok') {
           localStorage.setItem('user', JSON.stringify(res.user));
-          this.router.navigate(['/appeasement/codes']);
+          this.navigateAfterLogin(res);
         }
       },
       error: (err) => {
@@ -98,7 +98,7 @@ export class LoginComponent implements OnInit {
       next: (res) => {
         if (res.status === 'ok') {
           localStorage.setItem('user', JSON.stringify(res.user));
-          this.router.navigate(['/appeasement/codes']);
+          this.navigateAfterLogin(res);
         } else if (res.status === 'error') {
           this.errorMessage = res.message || 'Invalid credentials.';
         } else {
@@ -117,4 +117,16 @@ export class LoginComponent implements OnInit {
     this.errorMessage = '';
     this.passwordForm.reset();
   }
+
+  private navigateAfterLogin(user: any): void {
+
+  const role = Number(user?.role || 0);
+
+  if (role === 7) {
+    this.router.navigate(['/kimPm']);
+  } else {
+    this.router.navigate(['/appeasement/codes']);
+  }
+
+}
 }
