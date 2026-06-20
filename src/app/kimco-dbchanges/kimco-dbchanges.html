@@ -1,0 +1,112 @@
+<div class="section">
+
+  <!-- TITLE -->
+  <h3 class="agent-title">Kimco DB Changes</h3>
+  <div class="agent-underline"></div>
+
+  <!-- ===================== TOP SELECTORS ===================== -->
+  <div class="job-selector">
+
+    <!-- OLD -->
+    <div class="job-box">
+      <div class="job-title">OLD KIMCO JOB</div>
+
+      <select [(ngModel)]="selectedOldJob">
+        <option [ngValue]="null">Select job</option>
+        <option *ngFor="let j of jobs" [ngValue]="j.job_id">
+          {{ j.job_id }} - {{ j.label }}
+        </option>
+      </select>
+    </div>
+
+    <!-- CENTER BUTTON -->
+    <div class="job-action">
+      <button
+        class="calc-btn"
+        [disabled]="!canCompare()"
+        (click)="calculateChanges()">
+
+        Calculate Changes
+      </button>
+    </div>
+
+    <!-- NEW -->
+    <div class="job-box">
+      <div class="job-title">NEW KIMCO JOB</div>
+
+      <select [(ngModel)]="selectedNewJob">
+        <option [ngValue]="null">Select job</option>
+        <option *ngFor="let j of jobs" [ngValue]="j.job_id">
+          {{ j.job_id }} - {{ j.label }}
+        </option>
+      </select>
+    </div>
+
+  </div>
+
+  <!-- ===================== RESULTS ===================== -->
+  <div class="results-grid" *ngIf="diffReady">
+
+    <!-- LEFT: BUILDINGS CHANGED -->
+    <div class="card">
+
+      <div class="card-title">Buildings Changed</div>
+
+      <div class="list">
+
+        <div
+          class="list-item"
+          *ngFor="let b of changedBuildings"
+          (click)="selectBuilding(b)">
+
+          <b>#{{ b.building_id }}</b>
+          <span>{{ b.name }}</span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- RIGHT: TREE DIFF -->
+    <div class="card">
+
+      <div class="card-title">Payload Diff Tree</div>
+
+      <div class="tree">
+
+        <ng-container *ngFor="let node of diffTree">
+
+          <div
+            class="tree-node"
+            [ngClass]="node.change"
+            (click)="openNode(node)">
+
+            {{ node.name }}
+
+          </div>
+
+          <div class="tree-children" *ngIf="node.children?.length">
+
+            <ng-container *ngFor="let c of node.children">
+              <div
+                class="tree-node child"
+                [ngClass]="c.change"
+                (click)="openNode(c)">
+
+                {{ c.name }}
+
+              </div>
+            </ng-container>
+
+          </div>
+
+        </ng-container>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

@@ -363,4 +363,21 @@ private buildCanonicalPayload(payload: {
     timestamp: Date.now()
   };
 }
+
+// =========================
+// KIMCO JOBS
+// =========================
+getKimcoJobs() {
+  return this.http.get<any>('/api/getKimcoJobs.php');
+}
+
+// =========================
+// KIMCO PAYLOAD DIFF SOURCE
+// =========================
+getKimcoPayloads(oldJob: number, newJob: number) {
+  return this.http.post<any>('/api/getKimcoPayloads.php', {
+    oldJob,
+    newJob
+  });
+}
 }

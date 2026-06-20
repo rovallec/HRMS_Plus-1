@@ -11,6 +11,7 @@ import { CxCustomerOMS } from './cx-customer-oms/cx-customer-oms';
 import { CxOms } from './cx-oms/cx-oms';
 import { KimcoPropertyManagement } from './kimco-property-management/kimco-property-management';
 import { OpenWA } from './open-wa/open-wa';
+import { KimcoDbChangesComponent } from './kimco-dbchanges/kimco-dbchanges';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -29,6 +30,7 @@ export const routes: Routes = [
       { path: 'cxOMS', component: CxOms },
       { path: 'kimPm', component:KimcoPropertyManagement},
       {path: 'openWA', component:OpenWA},
+      { path: 'kimcoSync', component: KimcoDbChangesComponent },
       { path: '', redirectTo: 'appeasement/codes', pathMatch: 'full' }
     ]
   },

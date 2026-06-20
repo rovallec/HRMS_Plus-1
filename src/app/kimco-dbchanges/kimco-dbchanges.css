@@ -1,0 +1,76 @@
+.job-selector {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: end;
+}
+
+.job-box {
+  background: white;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.job-title {
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: #0b1d39;
+}
+
+.calc-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  background: #0b1d39;
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.calc-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.card-title {
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.list-item {
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.list-item:hover {
+  background: #f4f6f9;
+}
+
+/* TREE COLORS */
+.added { color: #16a34a; }
+.removed { color: #dc2626; }
+.modified { color: #f59e0b; }
+.none { color: #6b7280; }
+
+.tree-node {
+  padding: 6px;
+  cursor: pointer;
+}
+
+.child {
+  margin-left: 18px;
+}
