@@ -367,17 +367,26 @@ private buildCanonicalPayload(payload: {
 // =========================
 // KIMCO JOBS
 // =========================
-getKimcoJobs() {
-  return this.http.get<any>('/api/getKimcoJobs.php');
+getKimcoJobs(): Observable<any> {
+
+  return this.http.get<any>(
+    `${this.API_URL}/getKimcoJobs.php`
+  );
+
 }
 
 // =========================
 // KIMCO PAYLOAD DIFF SOURCE
 // =========================
-getKimcoPayloads(oldJob: number, newJob: number) {
-  return this.http.post<any>('/api/getKimcoPayloads.php', {
-    oldJob,
-    newJob
-  });
+getKimcoPayloads(oldJob: number, newJob: number): Observable<any> {
+
+  return this.http.post<any>(
+    `${this.API_URL}/getKimcoPayloads.php`,
+    {
+      oldJob,
+      newJob
+    }
+  );
+
 }
 }

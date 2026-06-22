@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { AppeasementService } from '../services/appeasement.service'; // ajusta path
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { AppeasementService } from '../services/appeasement.service';
 
 type ChangeType = 'none' | 'added' | 'removed' | 'modified';
 
 interface Job {
-  job_id: number;
-  label: string;
+  id: number;
+  job_type: string;
 }
 
 interface DiffNode {
@@ -16,11 +18,13 @@ interface DiffNode {
   children?: DiffNode[];
 }
 
+
 @Component({
-  selector: 'app-kimco-db-changes',
+  selector: 'app-kimco-dbchanges',
   standalone: true,
-  templateUrl: './kimco-db-changes.component.html',
-  styleUrls: ['./kimco-db-changes.component.css']
+  imports: [CommonModule, FormsModule],
+  templateUrl: './kimco-dbchanges.html',
+  styleUrls: ['./kimco-dbchanges.css']
 })
 export class KimcoDbChangesComponent implements OnInit {
 
@@ -34,6 +38,8 @@ export class KimcoDbChangesComponent implements OnInit {
   diffTree: DiffNode[] = [];
   changedBuildings: any[] = [];
 
+  loading = false;
+
   constructor(private service: AppeasementService) {}
 
   ngOnInit(): void {
@@ -41,12 +47,22 @@ export class KimcoDbChangesComponent implements OnInit {
   }
 
   // =========================
+// BUILDING SELECT HANDLER
+// =========================
+selectBuilding(b: any) {
+  console.log('Selected building:', b);
+
+  // opcional: si luego quieres modal o highlight
+  // this.selectedBuilding = b;
+}
+
+  // =========================
   // LOAD JOBS
   // =========================
   loadJobs() {
     this.service.getKimcoJobs()
       .subscribe(res => {
-        this.jobs = res?.data ?? res; // soporta ambos formatos
+        this.jobs = res?.data ?? res;
       });
   }
 
@@ -64,29 +80,29 @@ export class KimcoDbChangesComponent implements OnInit {
 
     if (!this.canCompare()) return;
 
+    this.loading = true;
+    this.diffReady = false;
+
     this.service.getKimcoPayloads(
       this.selectedOldJob!,
       this.selectedNewJob!
     ).subscribe(res => {
 
-      const oldPayload = res?.data?.old?.payload ?? res.old?.payload;
-      const newPayload = res?.data?.new?.payload ?? res.new?.payload;
+      const oldPayload = res?.data?.old?.data ?? res?.old ?? {};
+      const newPayload = res?.data?.new?.data ?? res?.new ?? {};
 
       this.diffTree = this.buildDiffTree('root', oldPayload, newPayload);
       this.changedBuildings = this.extractChangedBuildings(this.diffTree);
 
       this.diffReady = true;
+      this.loading = false;
     });
   }
 
   // =========================
-  // DIFF ENGINE (RECURSIVE)
+  // DIFF ENGINE
   // =========================
-  buildDiffTree(
-    name: string,
-    oldVal: any,
-    newVal: any
-  ): DiffNode[] {
+  buildDiffTree(name: string, oldVal: any, newVal: any): DiffNode[] {
 
     const nodes: DiffNode[] = [];
 
@@ -118,7 +134,7 @@ export class KimcoDbChangesComponent implements OnInit {
         node.oldValue = o;
       }
 
-      // OBJECT -> RECURSE
+      // OBJECT RECURSION
       else if (this.isObject(o) || this.isObject(n)) {
         node.children = this.buildDiffTree(key, o || {}, n || {});
         node.change = this.inheritChange(node.children);
@@ -173,7 +189,8 @@ export class KimcoDbChangesComponent implements OnInit {
       for (const n of nodes) {
         if (n.change !== 'none') {
           result.push({
-            name: n.name
+            name: n.name,
+            change: n.change
           });
         }
         if (n.children?.length) walk(n.children);
@@ -190,16 +207,21 @@ export class KimcoDbChangesComponent implements OnInit {
   }
 
   // =========================
-  openNode(node: DiffNode) {
-
-    alert(
-      `Change: ${node.change}\n\n` +
-      `Old Value: ${JSON.stringify(node.oldValue, null, 2)}\n\n` +
-      `New Value: ${JSON.stringify(node.newValue, null, 2)}`
-    );
+  // UI HELP
+  // =========================
+  selectOldJob(id: number) {
+    this.selectedOldJob = id;
   }
 
-  selectBuilding(b: any) {
-    console.log('building selected', b);
+  selectNewJob(id: number) {
+    this.selectedNewJob = id;
+  }
+
+  openNode(node: DiffNode) {
+    alert(
+      `Change: ${node.change}\n\n` +
+      `Old: ${JSON.stringify(node.oldValue, null, 2)}\n\n` +
+      `New: ${JSON.stringify(node.newValue, null, 2)}`
+    );
   }
 }

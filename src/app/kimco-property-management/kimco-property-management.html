@@ -209,6 +209,61 @@
           <p><b>State:</b> {{ i?.state }}</p>
           <p><b>Zip Code:</b> {{ i?.zip_code }}</p>
           <p><b>Phone Number:</b> {{ i?.phone_number }}</p>
+          <!-- DESIGNATED CONTACT -->
+
+<div
+  class="tree-group-header"
+  (click)="selectedItem.showDesignated = !selectedItem.showDesignated">
+
+  <i
+    class="bi"
+    [class.bi-chevron-right]="!selectedItem.showDesignated"
+    [class.bi-chevron-down]="selectedItem.showDesignated">
+  </i>
+
+  Designated Contact
+
+</div>
+
+<div
+  *ngIf="selectedItem.showDesignated"
+  class="tree-detail">
+
+  <p><b>Name:</b> {{ selectedItem?.designated_contact?.name }}</p>
+  <p><b>Work Phone:</b> {{ selectedItem?.designated_contact?.work_phone }}</p>
+  <p><b>Mobile Phone:</b> {{ selectedItem?.designated_contact?.mobile_phone }}</p>
+  <p><b>Email:</b> {{ selectedItem?.designated_contact?.email }}</p>
+
+</div>
+
+<!-- SECONDARY CONTACT -->
+
+<div
+  class="tree-group-header"
+  (click)="selectedItem.showSecondary = !selectedItem.showSecondary">
+
+  <i
+    class="bi"
+    [class.bi-chevron-right]="!selectedItem.showSecondary"
+    [class.bi-chevron-down]="selectedItem.showSecondary">
+  </i>
+
+  Secondary Contact
+
+</div>
+
+<div
+  *ngIf="selectedItem.showSecondary"
+  class="tree-detail">
+
+  <p><b>Name:</b> {{ selectedItem?.secondary_vendor_contact?.name }}</p>
+  <p><b>Work Phone:</b> {{ selectedItem?.secondary_vendor_contact?.work_phone }}</p>
+  <p><b>Mobile Phone:</b> {{ selectedItem?.secondary_vendor_contact?.mobile_phone }}</p>
+  <p><b>Email:</b> {{ selectedItem?.secondary_vendor_contact?.email }}</p>
+
+</div>
+
+<p><b>Notes:</b> {{ selectedItem?.notes }}</p>
           <p><b>Notes:</b> {{ i?.notes }}</p>
         </div>
       </div>

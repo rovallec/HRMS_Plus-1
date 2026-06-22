@@ -13,8 +13,8 @@
 
       <select [(ngModel)]="selectedOldJob">
         <option [ngValue]="null">Select job</option>
-        <option *ngFor="let j of jobs" [ngValue]="j.job_id">
-          {{ j.job_id }} - {{ j.label }}
+        <option *ngFor="let j of jobs" [ngValue]="j.id">
+          {{ j.id }} - {{ j.job_type }}
         </option>
       </select>
     </div>
@@ -36,8 +36,8 @@
 
       <select [(ngModel)]="selectedNewJob">
         <option [ngValue]="null">Select job</option>
-        <option *ngFor="let j of jobs" [ngValue]="j.job_id">
-          {{ j.job_id }} - {{ j.label }}
+        <option *ngFor="let j of jobs" [ngValue]="j.id">
+          {{ j.id }} - {{ j.job_type }}
         </option>
       </select>
     </div>
