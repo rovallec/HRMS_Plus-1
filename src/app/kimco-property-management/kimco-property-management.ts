@@ -105,9 +105,6 @@ loadData(): void {
       this.selectedList = [];
 
     }
-
-
-    console.log(item)
   }
 
   closeModal(): void {
