@@ -235,7 +235,7 @@ $lease_personnel = safeFetchAll($conn, "
 ", ["id" => $internalBuildingId]);
 
 $vendors = safeFetchAll($conn, "
-    SELECT vendor_name, type, street, city, state, zip_code, phone_number, notes
+    SELECT *
     FROM vendors WHERE building_id = :id
 ", ["id" => $internalBuildingId]);
 
