@@ -106,6 +106,8 @@ loadData(): void {
 
     }
 
+
+    console.log(item)
   }
 
   closeModal(): void {

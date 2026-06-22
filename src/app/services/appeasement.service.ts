@@ -5,8 +5,8 @@ import { Code } from '../models/code';
 
 @Injectable({ providedIn: 'root' })
 export class AppeasementService {
-  private readonly API_URL = 'https://my.cxperts.us/api/endpoints';
-  //private readonly API_URL = 'http://localhost/endpoints';
+  //private readonly API_URL = 'https://my.cxperts.us/api/endpoints';
+  private readonly API_URL = 'http://localhost/endpoints';
   private readonly GRAPH_URL = 'https://graph.microsoft.com/v1.0/me/photo/$value';
 
   

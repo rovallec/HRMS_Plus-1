@@ -27,23 +27,17 @@
   <!-- Search -->
   <div class="search-container">
 
-  <input
-    class="search-input"
-    type="text"
-    [(ngModel)]="searchText"
-    (keyup.enter)="runSearch()"
-    placeholder="Search property information..." />
+    <input class="search-input" type="text" [(ngModel)]="searchText" (keyup.enter)="runSearch()"
+      placeholder="Search property information..." />
 
-  <button
-    class="search-btn"
-    (click)="runSearch()">
+    <button class="search-btn" (click)="runSearch()">
 
-    <i class="bi bi-search"></i>
-    Search
+      <i class="bi bi-search"></i>
+      Search
 
-  </button>
+    </button>
 
-</div>
+  </div>
 
   <!-- GRID -->
   <div class="cards-grid">
@@ -196,6 +190,46 @@
         <p><b>State:</b> {{ selectedItem?.state }}</p>
         <p><b>Zip Code:</b> {{ selectedItem?.zip_code }}</p>
         <p><b>Phone Number:</b> {{ selectedItem?.phone_number }}</p>
+        <!-- DESIGNATED CONTACT -->
+
+        <div class="tree-group-header" (click)="selectedItem.showDesignated = !selectedItem.showDesignated">
+
+          <i class="bi" [class.bi-chevron-right]="!selectedItem.showDesignated" [class.bi-chevron-down]="selectedItem.showDesignated">
+          </i>
+
+          Designated Contact
+
+        </div>
+
+        <div *ngIf="selectedItem.showDesignated" class="tree-detail">
+
+          <p><b>Name:</b> {{ selectedItem?.designated_contact?.name }}</p>
+          <p><b>Work Phone:</b> {{ selectedItem?.designated_contact?.work_phone }}</p>
+          <p><b>Mobile Phone:</b> {{ selectedItem?.designated_contact?.mobile_phone }}</p>
+          <p><b>Email:</b> {{ selectedItem?.designated_contact?.email }}</p>
+
+        </div>
+
+        <!-- SECONDARY CONTACT -->
+
+        <div class="tree-group-header" (click)="selectedItem.showSecondary = !selectedItem.showSecondary">
+
+          <i class="bi" [class.bi-chevron-right]="!selectedItem.showSecondary" [class.bi-chevron-down]="selectedItem.showSecondary">
+          </i>
+
+          Secondary Contact
+
+        </div>
+
+        <div *ngIf="selectedItem.showSecondary" class="tree-detail">
+
+          <p><b>Name:</b> {{ selectedItem?.secondary_vendor_contact?.name }}</p>
+          <p><b>Work Phone:</b> {{ selectedItem?.secondary_vendor_contact?.work_phone }}</p>
+          <p><b>Mobile Phone:</b> {{ selectedItem?.secondary_vendor_contact?.mobile_phone }}</p>
+          <p><b>Email:</b> {{ selectedItem?.secondary_vendor_contact?.email }}</p>
+
+        </div>
+
         <p><b>Notes:</b> {{ selectedItem?.notes }}</p>
       </div>
 
@@ -209,61 +243,47 @@
           <p><b>State:</b> {{ i?.state }}</p>
           <p><b>Zip Code:</b> {{ i?.zip_code }}</p>
           <p><b>Phone Number:</b> {{ i?.phone_number }}</p>
+
           <!-- DESIGNATED CONTACT -->
 
-<div
-  class="tree-group-header"
-  (click)="selectedItem.showDesignated = !selectedItem.showDesignated">
+          <div class="tree-group-header" (click)="i.showDesignated = !i.showDesignated">
 
-  <i
-    class="bi"
-    [class.bi-chevron-right]="!selectedItem.showDesignated"
-    [class.bi-chevron-down]="selectedItem.showDesignated">
-  </i>
+            <i class="bi" [class.bi-chevron-right]="!i.showDesignated" [class.bi-chevron-down]="i.showDesignated">
+            </i>
 
-  Designated Contact
+            Designated Contact
 
-</div>
+          </div>
 
-<div
-  *ngIf="selectedItem.showDesignated"
-  class="tree-detail">
+          <div *ngIf="i.showDesignated" class="tree-detail">
 
-  <p><b>Name:</b> {{ selectedItem?.designated_contact?.name }}</p>
-  <p><b>Work Phone:</b> {{ selectedItem?.designated_contact?.work_phone }}</p>
-  <p><b>Mobile Phone:</b> {{ selectedItem?.designated_contact?.mobile_phone }}</p>
-  <p><b>Email:</b> {{ selectedItem?.designated_contact?.email }}</p>
+            <p><b>Name:</b> {{ i?.designated_contact?.name }}</p>
+            <p><b>Work Phone:</b> {{ i?.designated_contact?.work_phone }}</p>
+            <p><b>Mobile Phone:</b> {{ i?.designated_contact?.mobile_phone }}</p>
+            <p><b>Email:</b> {{ i?.designated_contact?.email }}</p>
 
-</div>
+          </div>
 
-<!-- SECONDARY CONTACT -->
+          <!-- SECONDARY CONTACT -->
 
-<div
-  class="tree-group-header"
-  (click)="selectedItem.showSecondary = !selectedItem.showSecondary">
+          <div class="tree-group-header" (click)="i.showSecondary = !i.showSecondary">
 
-  <i
-    class="bi"
-    [class.bi-chevron-right]="!selectedItem.showSecondary"
-    [class.bi-chevron-down]="selectedItem.showSecondary">
-  </i>
+            <i class="bi" [class.bi-chevron-right]="!i.showSecondary" [class.bi-chevron-down]="i.showSecondary">
+            </i>
 
-  Secondary Contact
+            Secondary Contact
 
-</div>
+          </div>
 
-<div
-  *ngIf="selectedItem.showSecondary"
-  class="tree-detail">
+          <div *ngIf="i.showSecondary" class="tree-detail">
 
-  <p><b>Name:</b> {{ selectedItem?.secondary_vendor_contact?.name }}</p>
-  <p><b>Work Phone:</b> {{ selectedItem?.secondary_vendor_contact?.work_phone }}</p>
-  <p><b>Mobile Phone:</b> {{ selectedItem?.secondary_vendor_contact?.mobile_phone }}</p>
-  <p><b>Email:</b> {{ selectedItem?.secondary_vendor_contact?.email }}</p>
+            <p><b>Name:</b> {{ i?.secondary_vendor_contact?.name }}</p>
+            <p><b>Work Phone:</b> {{ i?.secondary_vendor_contact?.work_phone }}</p>
+            <p><b>Mobile Phone:</b> {{ i?.secondary_vendor_contact?.mobile_phone }}</p>
+            <p><b>Email:</b> {{ i?.secondary_vendor_contact?.email }}</p>
 
-</div>
+          </div>
 
-<p><b>Notes:</b> {{ selectedItem?.notes }}</p>
           <p><b>Notes:</b> {{ i?.notes }}</p>
         </div>
       </div>
@@ -340,9 +360,9 @@
 
       <div *ngIf="modalMode === 'single'">
         <p><b>Title:</b> {{ selectedItem?.title }}</p>
-          <p><b>Description:</b></p>
-          <div [innerHTML]="selectedItem?.description"></div> 
-          <p><b>Updated:</b> {{ selectedItem?.last_updated | date:'short' }}</p>
+        <p><b>Description:</b></p>
+        <div [innerHTML]="selectedItem?.description"></div>
+        <p><b>Updated:</b> {{ selectedItem?.last_updated | date:'short' }}</p>
       </div>
 
       <div *ngIf="modalMode === 'list'">
@@ -350,7 +370,7 @@
           <hr>
           <p><b>Title:</b> {{ i?.title }}</p>
           <p><b>Description:</b></p>
-          <div [innerHTML]="i?.description"></div>        
+          <div [innerHTML]="i?.description"></div>
           <p><b>Updated:</b> {{ i?.last_updated | date:'short' }}</p>
         </div>
       </div>
@@ -362,23 +382,16 @@
 
 <!-- SEARCH MODAL -->
 
-<div
-  class="search-modal-backdrop"
-  *ngIf="showSearchModal"
-  (click)="closeSearchModal()">
+<div class="search-modal-backdrop" *ngIf="showSearchModal" (click)="closeSearchModal()">
 </div>
 
-<div
-  class="custom-search-modal search-modal"
-  *ngIf="showSearchModal">
+<div class="custom-search-modal search-modal" *ngIf="showSearchModal">
 
   <div class="search-modal-header">
 
     <h5>Search Results</h5>
 
-    <button
-      class="close-btn"
-      (click)="closeSearchModal()">
+    <button class="close-btn" (click)="closeSearchModal()">
 
       ×
 
@@ -388,9 +401,7 @@
 
   <div class="search-modal-body">
 
-    <div
-      class="empty-search"
-      *ngIf="searchTree.length === 0">
+    <div class="empty-search" *ngIf="searchTree.length === 0">
 
       No results found
 
@@ -398,18 +409,11 @@
 
     <!-- GROUPS -->
 
-    <div
-      *ngFor="let group of searchTree"
-      class="tree-group">
+    <div *ngFor="let group of searchTree" class="tree-group">
 
-      <div
-        class="tree-group-header"
-        (click)="toggleGroup(group)">
+      <div class="tree-group-header" (click)="toggleGroup(group)">
 
-        <i
-          class="bi"
-          [class.bi-chevron-right]="!group.expanded"
-          [class.bi-chevron-down]="group.expanded">
+        <i class="bi" [class.bi-chevron-right]="!group.expanded" [class.bi-chevron-down]="group.expanded">
         </i>
 
         {{ group.name }}
@@ -417,36 +421,24 @@
 
       </div>
 
-      <div
-        *ngIf="group.expanded"
-        class="tree-items">
+      <div *ngIf="group.expanded" class="tree-items">
 
-        <div
-          *ngFor="let item of group.items">
+        <div *ngFor="let item of group.items">
 
-          <div
-            class="tree-item-header"
-            (click)="toggleItem(item)">
+          <div class="tree-item-header" (click)="toggleItem(item)">
 
-            <i
-              class="bi"
-              [class.bi-chevron-right]="!item.expanded"
-              [class.bi-chevron-down]="item.expanded">
+            <i class="bi" [class.bi-chevron-right]="!item.expanded" [class.bi-chevron-down]="item.expanded">
             </i>
 
             {{ item.title }}
 
           </div>
 
-          <div
-            *ngIf="item.expanded"
-            class="tree-detail">
+          <div *ngIf="item.expanded" class="tree-detail">
 
-            <div
-              *ngFor="let field of item.data | keyvalue">
+            <div *ngFor="let field of item.data | keyvalue">
 
-              <div
-                *ngIf="field.value">
+              <div *ngIf="field.value">
 
                 <span class="field-name">
 

@@ -121,8 +121,8 @@ try {
 
     // --- Redirect to Angular ---
     $encoded = base64_encode(json_encode($userData));
-    header("Location: https://my.cxperts.us/login?token={$encoded}");
-    #header("Location: http://localhost:4200/login?token={$encoded}");
+    #header("Location: https://my.cxperts.us/login?token={$encoded}");
+    header("Location: http://localhost:4200/login?token={$encoded}");
     exit;
 
 } catch (Exception $e) {
