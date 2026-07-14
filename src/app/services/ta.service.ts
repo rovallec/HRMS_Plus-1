@@ -6,7 +6,8 @@ import { TaForm, TaSubmission } from '../ta/ta.models';
 @Injectable({ providedIn: 'root' })
 export class TaService {
   // Keep TA on the same API base currently used by the rest of the application.
-  private readonly url = 'http://localhost/endpoints/ta.php';
+  private readonly url = 'https://my.cxperts.us/api/endpoints';
+  //private readonly url = 'http://localhost/endpoints/ta.php';
 
   constructor(private http: HttpClient) {}
 
