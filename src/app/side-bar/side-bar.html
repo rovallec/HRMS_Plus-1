@@ -18,6 +18,12 @@
 
         <ul class="nav flex-column mt-3">
 
+          <li class="nav-item" *ngIf="role === 6">
+            <a class="nav-link" routerLink="/ta" routerLinkActive="active">
+              <i class="bi bi-person-workspace me-2"></i>TA Recruitment
+            </a>
+          </li>
+
           <li class="nav-item">
             <a class="nav-link"
                routerLink="/kimco"

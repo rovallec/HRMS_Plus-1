@@ -12,10 +12,14 @@ import { CxOms } from './cx-oms/cx-oms';
 import { KimcoPropertyManagement } from './kimco-property-management/kimco-property-management';
 import { OpenWA } from './open-wa/open-wa';
 import { KimcoDbChangesComponent } from './kimco-dbchanges/kimco-dbchanges';
+import { TaAdmin } from './ta/ta-admin';
+import { TaFormRenderer } from './ta/ta-form';
+import { Role6Guard } from './guards/role6Guard';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'customer/:token', component: CxCustomerOMS },
+  { path: 'ta/form/:slug', component: TaFormRenderer },
   {
     path: '',
     canActivate: [AuthGuards],
@@ -31,6 +35,7 @@ export const routes: Routes = [
       { path: 'kimPm', component:KimcoPropertyManagement},
       {path: 'openWA', component:OpenWA},
       { path: 'kimcoSync', component: KimcoDbChangesComponent },
+      { path: 'ta', component: TaAdmin, canActivate: [Role6Guard] },
       { path: '', redirectTo: 'appeasement/codes', pathMatch: 'full' }
     ]
   },

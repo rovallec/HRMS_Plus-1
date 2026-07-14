@@ -120,7 +120,14 @@ export class LoginComponent implements OnInit {
 
   private navigateAfterLogin(user: any): void {
 
-  const role = Number(user?.role || 0);
+  const returnUrl = sessionStorage.getItem('taReturnUrl');
+  if (returnUrl?.startsWith('/ta/form/')) {
+    sessionStorage.removeItem('taReturnUrl');
+    this.router.navigateByUrl(returnUrl);
+    return;
+  }
+
+  const role = Number(user?.user?.role || user?.role || 0);
 
   if (role === 7) {
     this.router.navigate(['/kimPm']);

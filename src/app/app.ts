@@ -19,6 +19,6 @@ export class App {
     return this.router.url.includes('/login');
   }
 isCustomerOMS(): boolean {
-  return this.router.url.includes('/customer/');
+  return this.router.url.includes('/customer/') || this.router.url.includes('/ta/form/');
 }
 }

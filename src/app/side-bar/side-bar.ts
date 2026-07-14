@@ -30,7 +30,7 @@ export class SideBar {
   // =========================================================
 
   get role(): number {
-    return this.currentUser?.role || 0;
+    return Number(this.currentUser?.idRole ?? this.currentUser?.role ?? 0);
   }
 
   get username(): string {

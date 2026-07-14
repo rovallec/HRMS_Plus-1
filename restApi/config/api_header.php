@@ -8,7 +8,7 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 
 // Permitir los headers usados por Angular y APIs modernas
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-TA-User, X-TA-Username");
 
 // Si es una solicitud "preflight" (OPTIONS), responder inmediatamente
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {

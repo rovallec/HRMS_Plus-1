@@ -1,0 +1,91 @@
+<div class="ta-section">
+  <div class="page-header d-flex justify-content-between align-items-start gap-3">
+    <div><h3 class="agent-title">Talent Acquisition</h3><div class="agent-underline"></div><p class="text-muted mb-0">Build recruitment forms and review candidate submissions.</p></div>
+    <button class="btn btn-outline-navy" (click)="newForm(); tab='builder'"><i class="bi bi-plus-lg me-1"></i> New form</button>
+  </div>
+  <div class="coral-separator"></div>
+
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><button class="nav-link" [class.active]="tab==='builder'" (click)="tab='builder'"><i class="bi bi-sliders me-2"></i>Configuration</button></li>
+    <li class="nav-item"><button class="nav-link" [class.active]="tab==='submissions'" (click)="openSubmissions()"><i class="bi bi-inbox me-2"></i>Submissions</button></li>
+  </ul>
+  <div class="alert py-2" [class.alert-success]="message==='Form saved.'" [class.alert-danger]="message!=='Form saved.'" *ngIf="message">{{message}}</div>
+
+  <div class="builder-layout" *ngIf="tab==='builder'" [class.list-collapsed]="!formListOpen">
+    <aside class="forms-panel card shadow-sm">
+      <div class="card-header bg-dark text-white d-flex align-items-center justify-content-between"><span *ngIf="formListOpen"><i class="bi bi-folder2-open me-2"></i>Forms</span><button class="icon-btn text-white ms-auto" (click)="formListOpen=!formListOpen" [title]="formListOpen?'Collapse':'Expand forms panel'"><i class="bi" [class.bi-chevron-left]="formListOpen" [class.bi-chevron-right]="!formListOpen"></i></button></div>
+      <div class="card-body p-2" *ngIf="formListOpen">
+        <button class="form-item" *ngFor="let item of forms" [class.active]="item.id===selectedFormId" (click)="edit(item)"><span><strong>{{item.title}}</strong><small>/ta/form/{{item.slug}}</small></span><span class="badge" [class.bg-success]="item.status==='published'" [class.bg-secondary]="item.status!=='published'">{{item.status}}</span></button>
+        <div class="text-muted text-center py-4" *ngIf="!forms.length"><i class="bi bi-folder2 d-block fs-3"></i>No forms yet</div>
+      </div>
+    </aside>
+
+    <main class="configuration-scroll">
+      <section class="config-card card shadow-sm">
+        <button class="config-heading" (click)="basicOpen=!basicOpen"><span><i class="bi bi-file-earmark-text me-2"></i>Form details</span><i class="bi" [class.bi-chevron-up]="basicOpen" [class.bi-chevron-down]="!basicOpen"></i></button>
+        <div class="card-body" *ngIf="basicOpen"><div class="row g-3">
+          <div class="col-12"><label class="form-label fw-bold">Title</label><input class="form-control" [(ngModel)]="form.title" placeholder="Job application"></div>
+          <div class="col-md-8"><label class="form-label fw-bold">Public URL</label><div class="input-group"><span class="input-group-text">/ta/form/</span><input class="form-control" [(ngModel)]="form.slug" placeholder="job-application"></div></div>
+          <div class="col-md-4"><label class="form-label fw-bold">Status</label><select class="form-select" [(ngModel)]="form.status"><option value="draft">Draft</option><option value="published">Published</option><option value="closed">Closed</option></select></div>
+          <div class="col-12"><label class="form-label fw-bold">Description</label><textarea class="form-control" rows="2" [(ngModel)]="form.description"></textarea></div>
+        </div></div>
+      </section>
+
+      <section class="config-card card shadow-sm">
+        <button class="config-heading" (click)="rulesOpen=!rulesOpen"><span><i class="bi bi-shield-check me-2"></i>Publishing and access</span><i class="bi" [class.bi-chevron-up]="rulesOpen" [class.bi-chevron-down]="!rulesOpen"></i></button>
+        <div class="card-body" *ngIf="rulesOpen"><div class="row g-3">
+          <div class="col-md-4"><label class="form-label fw-bold">Layout</label><select class="form-select" [(ngModel)]="form.layout"><option value="single">Single page</option><option value="sections">Sections</option><option value="steps">Step by step</option></select></div>
+          <div class="col-md-4"><label class="form-label fw-bold">Available until</label><input type="datetime-local" class="form-control" [(ngModel)]="form.availableUntil"></div>
+          <div class="col-md-2"><label class="form-label fw-bold">Time (min)</label><input type="number" min="1" class="form-control" [(ngModel)]="form.timeLimitMinutes" placeholder="None"></div>
+          <div class="col-md-2"><label class="form-label fw-bold">Attempts</label><input type="number" min="1" class="form-control" [(ngModel)]="form.maxAttempts" placeholder="None"></div>
+          <div class="col-12 d-flex flex-wrap gap-4 pt-2"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" [(ngModel)]="form.isPublic"><label class="form-check-label">Public route</label></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" [(ngModel)]="form.requireAuth"><label class="form-check-label">Authentication required</label></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" [(ngModel)]="form.allowGeolocation"><label class="form-check-label">Request geolocation</label></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" [(ngModel)]="form.restrictCountries" (ngModelChange)="form.allowGeolocation=$event || form.allowGeolocation"><label class="form-check-label">Restrict by country</label></div></div>
+          <div class="col-12" *ngIf="form.restrictCountries"><div class="border rounded bg-light p-3"><div class="d-flex justify-content-between align-items-center mb-2"><label class="form-label fw-bold mb-0">Allowed countries</label><span class="badge bg-dark">{{form.allowedCountries.length}} selected</span></div><input class="form-control form-control-sm mb-2" [(ngModel)]="countrySearch" placeholder="Search countries..."><div class="row g-1 overflow-auto px-2" style="max-height:190px"><label class="form-check col-md-4 mb-0" *ngFor="let country of filteredCountries"><input class="form-check-input" type="checkbox" [checked]="countrySelected(country.code)" (change)="toggleCountry(country.code)"><span class="form-check-label">{{country.name}} <small class="text-muted">({{country.code}})</small></span></label></div></div></div>
+        </div></div>
+      </section>
+
+      <section class="config-card card shadow-sm">
+        <button class="config-heading" (click)="poolsOpen=!poolsOpen"><span><i class="bi bi-shuffle me-2"></i>Question pools <span class="badge bg-secondary ms-2">{{form.questionGroups.length}}</span></span><i class="bi" [class.bi-chevron-up]="poolsOpen" [class.bi-chevron-down]="!poolsOpen"></i></button>
+        <div class="card-body" *ngIf="poolsOpen">
+          <p class="text-muted small">Create independent groups inside any section. Each group can include every assigned question or randomly select a specific number.</p>
+          <div class="pool-card" *ngFor="let group of form.questionGroups">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-3"><label class="form-label">Group name</label><input class="form-control" [(ngModel)]="group.name"></div>
+              <div class="col-md-3"><label class="form-label">Section</label><input class="form-control" [ngModel]="group.section" (focus)="$any($event.target).dataset.old=group.section" (ngModelChange)="group.section=$event" (change)="updateGroupSection(group,$any($event.target).dataset.old)"></div>
+              <div class="col-md-2"><label class="form-label">Selection</label><select class="form-select" [(ngModel)]="group.mode"><option value="all">Include all</option><option value="random">Random</option></select></div>
+              <div class="col-md-2"><label class="form-label">Show</label><input type="number" class="form-control" min="1" [max]="groupCount(group)" [(ngModel)]="group.questionsToShow" [disabled]="group.mode==='all'"></div>
+              <div class="col-md-1 text-center"><span class="badge bg-dark">{{groupCount(group)}} assigned</span></div>
+              <div class="col-md-1 text-end"><button class="btn btn-outline-danger" title="Delete group" (click)="removeGroup(group)"><i class="bi bi-trash"></i></button></div>
+            </div>
+            <div class="small text-muted mt-2" *ngIf="group.mode==='random'">A different set of {{group.questionsToShow || 0}} questions will be selected from this group for each attempt.</div>
+            <div class="small text-muted mt-2" *ngIf="group.mode==='all'">All {{groupCount(group)}} assigned questions will always be included.</div>
+          </div>
+          <button class="btn btn-outline-navy mt-2" (click)="addGroup()"><i class="bi bi-plus-lg me-1"></i>Add question group</button>
+        </div>
+      </section>
+
+      <section class="config-card card shadow-sm">
+        <button class="config-heading" (click)="questionsOpen=!questionsOpen"><span><i class="bi bi-ui-checks-grid me-2"></i>Questions <span class="badge bg-secondary ms-2">{{form.fields.length}}</span></span><i class="bi" [class.bi-chevron-up]="questionsOpen" [class.bi-chevron-down]="!questionsOpen"></i></button>
+        <div class="card-body" *ngIf="questionsOpen">
+          <div class="question-row" *ngFor="let field of form.fields; let i=index">
+            <button class="question-summary" (click)="toggleQuestion(i)"><span class="number">{{i+1}}</span><span class="question-name"><strong>{{field.label || 'Untitled question'}}</strong><small>{{field.section || 'General'}} · {{typeLabel(field.type)}}</small></span><span class="badge bg-light text-dark" *ngIf="field.groupId">Pool</span><i class="bi" [class.bi-chevron-up]="expandedQuestions.has(i)" [class.bi-chevron-down]="!expandedQuestions.has(i)"></i></button>
+            <div class="question-editor" *ngIf="expandedQuestions.has(i)"><div class="row g-3">
+              <div class="col-12"><label class="form-label">Question</label><input class="form-control" [(ngModel)]="field.label"></div>
+              <div class="col-md-4"><label class="form-label">Type</label><select class="form-select" [(ngModel)]="field.type"><option *ngFor="let type of fieldTypes" [value]="type.value">{{type.label}}</option></select></div>
+              <div class="col-md-4"><label class="form-label">Section / step</label><input class="form-control" [(ngModel)]="field.section" (change)="field.groupId=null"></div>
+              <div class="col-md-4"><label class="form-label">Question group</label><select class="form-select" [(ngModel)]="field.groupId"><option [ngValue]="null">Always included (no group)</option><option *ngFor="let group of availableGroups(field)" [ngValue]="group.id">{{group.name}}</option></select></div>
+              <div class="col-12"><label class="form-label">Help text</label><input class="form-control" [(ngModel)]="field.placeholder"></div>
+              <div class="col-12" *ngIf="needsOptions(field)"><label class="form-label">Options (one per line)</label><textarea class="form-control" rows="3" [ngModel]="optionsText(field)" (ngModelChange)="setOptions(field,$event)"></textarea></div>
+              <div class="col-12 d-flex gap-4 align-items-center"><div class="form-check"><input class="form-check-input" type="checkbox" [(ngModel)]="field.required"><label class="form-check-label">Required</label></div><div class="form-check"><input class="form-check-input" type="checkbox" [(ngModel)]="field.showInTable"><label class="form-check-label">Show in submissions table</label></div><span class="flex-grow-1"></span><button class="btn btn-sm btn-outline-secondary" (click)="move(i,-1)"><i class="bi bi-arrow-up"></i></button><button class="btn btn-sm btn-outline-secondary" (click)="move(i,1)"><i class="bi bi-arrow-down"></i></button><button class="btn btn-sm btn-outline-danger" (click)="removeField(i)"><i class="bi bi-trash"></i></button></div>
+            </div></div>
+          </div>
+          <button class="btn btn-outline-navy mt-3" (click)="addField()"><i class="bi bi-plus-lg me-1"></i>Add question</button>
+        </div>
+      </section>
+      <div class="save-toolbar"><span *ngIf="form.id"><a [routerLink]="['/ta/form',form.slug]" target="_blank"><i class="bi bi-box-arrow-up-right me-1"></i>Preview form</a></span><span class="flex-grow-1"></span><button class="btn btn-outline-danger" *ngIf="form.id" (click)="remove(form)">Delete</button><button class="btn btn-outline-coral px-4" (click)="save()" [disabled]="saving">{{saving?'Saving...':'Save form'}}</button></div>
+    </main>
+  </div>
+
+  <section *ngIf="tab==='submissions'" class="card shadow-sm submissions-card"><div class="card-header bg-dark text-white d-flex justify-content-between align-items-center"><span>Received submissions</span><select class="form-select form-select-sm submission-filter" [ngModel]="selectedFormId" (ngModelChange)="selectedFormId=$event; openSubmissions(formFor($event))"><option [ngValue]="null">All forms</option><option *ngFor="let f of forms" [ngValue]="f.id">{{f.title}}</option></select></div><div class="table-responsive"><table class="table table-hover mb-0"><thead class="table-light"><tr><th>Form</th><th>Candidate</th><th>Date</th><th *ngFor="let field of selectedVisibleFields">{{field.label}}</th><th></th></tr></thead><tbody><tr *ngFor="let row of submissions" (click)="selectedSubmission=row"><td>{{formFor(row.formId)?.title}}</td><td>{{row.respondent || 'Anonymous'}}</td><td>{{row.submittedAt | date:'medium'}}</td><td *ngFor="let field of selectedVisibleFields">{{display(row.answers[field.id])}}</td><td><i class="bi bi-chevron-right"></i></td></tr></tbody></table><div class="text-center text-muted py-5" *ngIf="!submissions.length"><i class="bi bi-inbox fs-2 d-block"></i>No submissions yet</div></div></section>
+
+  <div class="detail-backdrop" *ngIf="selectedSubmission" (click)="selectedSubmission=null"><aside class="detail-panel" (click)="$event.stopPropagation()"><div class="detail-header"><h5>Submission #{{selectedSubmission.id}}</h5><button class="btn-close btn-close-white" (click)="selectedSubmission=null"></button></div><div class="p-4"><h5>{{formFor(selectedSubmission.formId)?.title}}</h5><p class="text-muted">{{selectedSubmission.respondent || 'Anonymous'}} · {{selectedSubmission.submittedAt | date:'medium'}}</p><dl><ng-container *ngFor="let field of formFor(selectedSubmission.formId)?.fields"><dt>{{field.label}}</dt><dd>{{display(selectedSubmission.answers[field.id])}}</dd></ng-container></dl></div></aside></div>
+</div>

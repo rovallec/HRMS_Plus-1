@@ -1,0 +1,26 @@
+<div class="public-page">
+  <div class="loading" *ngIf="loading"><span class="spinner-border"></span><p>Loading form...</p></div>
+  <div class="state-card" *ngIf="!loading && error && !form"><i class="bi bi-calendar-x"></i><h1>Not available</h1><p>{{error}}</p><a routerLink="/login">Go to sign in</a></div>
+  <div class="state-card success" *ngIf="submitted"><i class="bi bi-check2-circle"></i><h1>Response submitted!</h1><p>Thank you. Your information was received successfully.</p></div>
+  <main class="form-card" *ngIf="form && !submitted">
+    <div class="accent"></div>
+    <header><span class="brand">MY CXPERTS · TALENT ACQUISITION</span><h1>{{form.title}}</h1><p>{{form.description}}</p><div class="meta"><span *ngIf="form.timeLimitMinutes"><i class="bi bi-clock"></i> {{formatTime()}}</span><span *ngIf="form.maxAttempts"><i class="bi bi-arrow-repeat"></i> {{attemptsUsed}} of {{form.maxAttempts}} attempts used</span><span *ngIf="form.allowGeolocation"><i class="bi bi-geo-alt"></i> {{locating ? 'Checking location...' : locationCountryName || (location ? 'Location captured' : 'Location requested')}}</span></div></header>
+    <div class="auth-callout" *ngIf="form.requireAuth && !isLoggedIn()"><i class="bi bi-shield-lock"></i><div><strong>This form is private</strong><p>Sign in to continue.</p></div><button class="btn btn-primary" (click)="login()">Sign in</button></div>
+    <form *ngIf="!form.requireAuth || isLoggedIn()" (ngSubmit)="submit()">
+      <div class="stepper" *ngIf="form.layout==='steps'"><span *ngFor="let section of sections; let i=index" [class.active]="i===currentStep" [class.done]="i<currentStep"><b>{{i+1}}</b>{{section}}</span></div>
+      <section *ngFor="let section of visibleSections()" class="section-block">
+        <h2 *ngIf="form.layout!=='single'">{{section}}</h2>
+        <div class="question" *ngFor="let field of fieldsFor(section)">
+          <label class="question-label">{{field.label}} <em *ngIf="field.required">*</em></label><small *ngIf="field.placeholder">{{field.placeholder}}</small>
+          <input *ngIf="field.type==='short_text' || field.type==='phone' || field.type==='email' || field.type==='number'" class="form-control" [type]="field.type==='email'?'email':field.type==='number'?'number':field.type==='phone'?'tel':'text'" [(ngModel)]="answers[field.id]" [name]="field.id" [required]="field.required">
+          <textarea *ngIf="field.type==='long_text' || field.type==='rich_text'" class="form-control" rows="5" [(ngModel)]="answers[field.id]" [name]="field.id" [required]="field.required"></textarea>
+          <div class="choices" *ngIf="field.type==='single_choice'"><label *ngFor="let option of field.options"><input type="radio" [name]="field.id" [value]="option" [(ngModel)]="answers[field.id]"> {{option}}</label></div>
+          <div class="choices" *ngIf="field.type==='multiple_choice'"><label *ngFor="let option of field.options"><input type="checkbox" [checked]="answers[field.id]?.includes(option)" (change)="toggle(field,option,$any($event.target).checked)"> {{option}}</label></div>
+          <label class="upload" *ngIf="field.type==='pdf' || field.type==='image'"><i class="bi bi-cloud-arrow-up"></i><span>{{answers[field.id] || 'Choose a file'}}</span><input type="file" [accept]="field.type==='pdf'?'.pdf':'image/*'" (change)="chooseFile(field,$event)"></label>
+        </div>
+      </section>
+      <div class="alert alert-danger" *ngIf="error">{{error}}</div>
+      <footer><button type="button" class="btn btn-light" *ngIf="form.layout==='steps' && currentStep>0" (click)="currentStep=currentStep-1">Previous</button><span></span><button type="button" class="btn btn-primary" *ngIf="form.layout==='steps' && currentStep<sections.length-1" (click)="next()">Next</button><button type="submit" class="btn btn-primary" *ngIf="form.layout!=='steps' || currentStep===sections.length-1" [disabled]="submitting">{{submitting?'Submitting...':'Submit response'}}</button></footer>
+    </form>
+  </main>
+</div>
