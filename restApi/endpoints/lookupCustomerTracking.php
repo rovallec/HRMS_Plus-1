@@ -72,8 +72,29 @@ try {
         respond(['success' => false, 'error' => $message, 'attemptsRemaining' => $remaining], 422);
     }
 
-    $save = $conn->prepare('UPDATE tracking SET payload=:payload, http_status=:http_status, http_error=NULL WHERE id=:id AND payload IS NULL');
-    $save->execute(['payload' => json_encode($payload), 'http_status' => $httpCode, 'id' => $tracking['id']]);
+    // Persist the successful OMS response before exposing it to the customer.
+    // Do not condition this on payload being NULL: legacy rows can contain an
+    // empty string and must be populated as well.
+    $conn->beginTransaction();
+    $save = $conn->prepare('
+        UPDATE tracking
+        SET payload = :payload,
+            http_status = :http_status,
+            http_error = NULL
+        WHERE id = :id
+    ');
+    $saved = $save->execute([
+        'payload' => $response,
+        'http_status' => $httpCode,
+        'id' => $tracking['id']
+    ]);
+
+    if (!$saved || $save->rowCount() !== 1) {
+        $conn->rollBack();
+        throw new RuntimeException('Could not persist the Cole Haan payload.');
+    }
+
+    $conn->commit();
     respond(['success' => true, 'payload' => $payload, 'attemptsRemaining' => $remaining]);
 } catch (Throwable $e) {
     if (isset($conn) && $conn->inTransaction()) { $conn->rollBack(); }
