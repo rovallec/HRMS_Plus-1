@@ -117,3 +117,8 @@ html, body {
   margin: 15px 0;
   opacity: 0.1;
 }
+
+.email-lookup { max-width: 460px; margin: 0 auto; }
+.attempts-text { margin: 10px 0; font-size: 12px; color: #777; }
+.lookup-button { width: 100%; border: 0; border-radius: 6px; padding: 11px 16px; background: #0b1d39; color: #fff; font-weight: 600; }
+.lookup-button:disabled { opacity: .65; cursor: not-allowed; }

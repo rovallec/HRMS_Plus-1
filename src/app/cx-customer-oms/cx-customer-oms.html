@@ -41,6 +41,29 @@
           <!-- ✅ CONTENT -->
           <div *ngIf="!isLoading && isValidToken">
 
+            <div *ngIf="requiresEmail" class="email-lookup">
+              <h4 class="mb-3 section-title">Find Your Order</h4>
+              <div class="blue-separator"></div>
+              <p><strong>Order #:</strong> {{ orderNumber }}</p>
+              <p class="text-muted">Enter the email address used to place this order.</p>
+              <label for="orderEmail" class="form-label">Email address</label>
+              <input id="orderEmail" type="email" class="form-control" [(ngModel)]="email"
+                (keyup.enter)="submitEmail()" [disabled]="isSubmittingEmail" autocomplete="email"
+                placeholder="name@example.com" />
+              <div *ngIf="lookupError" class="alert alert-danger mt-3 mb-0">{{ lookupError }}</div>
+              <p class="attempts-text">{{ attemptsRemaining }} attempt{{ attemptsRemaining === 1 ? '' : 's' }} remaining</p>
+              <button type="button" class="lookup-button" (click)="submitEmail()" [disabled]="isSubmittingEmail">
+                <span *ngIf="isSubmittingEmail" class="spinner-border spinner-border-sm me-2"></span>
+                View order
+              </button>
+            </div>
+
+            <div *ngIf="!requiresEmail && !orderData" class="alert alert-danger text-center">
+              The maximum number of attempts has been reached. This link can no longer be used.
+            </div>
+
+            <ng-container *ngIf="orderData">
+
             <h4 class="mb-3 section-title">Order Details</h4>
 
             <div class="blue-separator"></div>
@@ -103,6 +126,8 @@
               <p><strong>Country:</strong> {{ orderData?.shippingAddress?.countryCode }}</p>
               <p><strong>Postal Code:</strong> {{ orderData?.shippingAddress?.postalCode }}</p>
             </div>
+
+            </ng-container>
 
           </div>
 

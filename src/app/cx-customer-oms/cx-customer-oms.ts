@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { AppeasementService } from '../services/appeasement.service';
 
 @Component({
   selector: 'app-cx-customer-oms',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './cx-customer-oms.html',
   styleUrl: './cx-customer-oms.css'
 })
@@ -22,6 +23,13 @@ export class CxCustomerOMS implements OnInit {
   // Mock data (luego vendrá del API)
   customerData: any = null;
   orderData: any = null;
+  orderNumber: string = '';
+  email: string = '';
+  sessionToken: string = '';
+  attemptsRemaining: number = 0;
+  requiresEmail: boolean = false;
+  isSubmittingEmail: boolean = false;
+  lookupError: string = '';
 
   constructor(private route: ActivatedRoute, private api: AppeasementService) {}
 
@@ -55,7 +63,11 @@ ngOnInit(): void {
 
   // 🔥 FIX: backend no usa "payload", usa "data" o "order"
 const payload = res.payload;
-this.orderData = payload.order;
+this.orderNumber = res.orderNumber || payload?.order?.orderNumber || '';
+this.sessionToken = res.sessionToken || '';
+this.attemptsRemaining = res.attemptsRemaining ?? 0;
+this.requiresEmail = !payload && this.attemptsRemaining > 0;
+this.orderData = payload?.order || null;
 
   this.isValidToken = true;
   this.isLoading = false;
@@ -104,5 +116,40 @@ this.orderData = payload.order;
       status: 'Shipped',
       date: '2026-04-05'
     };
+  }
+
+  submitEmail(): void {
+    if (!this.token || !this.sessionToken || this.isSubmittingEmail) return;
+
+    const email = this.email.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.lookupError = 'Please enter a valid email address.';
+      return;
+    }
+
+    this.isSubmittingEmail = true;
+    this.lookupError = '';
+
+    this.api.lookupCustomerTracking(this.token, this.sessionToken, email).subscribe({
+      next: (res: any) => {
+        this.isSubmittingEmail = false;
+        this.attemptsRemaining = res.attemptsRemaining ?? this.attemptsRemaining;
+
+        if (!res.success) {
+          this.lookupError = res.error || 'We could not find the order with that email address.';
+          this.requiresEmail = this.attemptsRemaining > 0;
+          return;
+        }
+
+        this.orderData = res.payload?.order || null;
+        this.requiresEmail = false;
+      },
+      error: (err) => {
+        this.isSubmittingEmail = false;
+        this.attemptsRemaining = err.error?.attemptsRemaining ?? this.attemptsRemaining;
+        this.requiresEmail = this.attemptsRemaining > 0;
+        this.lookupError = err.error?.error || 'The order service is unavailable. Please try again.';
+      }
+    });
   }
 }

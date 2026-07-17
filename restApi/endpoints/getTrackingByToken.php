@@ -40,12 +40,14 @@ try {
     // 1. GET VALID TRACKING
     // ======================================================
 
+    $conn->beginTransaction();
     $stmt = $conn->prepare("
-SELECT *
-FROM tracking
-WHERE uid = :uid
-  AND status = 'ACTIVE'
-  AND created_at > DATEADD(HOUR, -24, GETDATE())
+SELECT t.*, o.order_number
+FROM tracking t WITH (UPDLOCK, ROWLOCK)
+INNER JOIN [order] o ON o.id = t.id_order
+WHERE t.uid = :uid
+  AND t.status = 'ACTIVE'
+  AND t.created_at > DATEADD(HOUR, -24, GETDATE())
     ");
 
     $stmt->execute([
@@ -61,6 +63,7 @@ WHERE uid = :uid
             'message' => 'Token expired or already used'
         ]);
 
+        $conn->rollBack();
         exit;
 
     }
@@ -69,7 +72,9 @@ WHERE uid = :uid
     // 2. DECODE PAYLOAD
     // ======================================================
 
-    $payload = json_decode($tracking['payload'], true);
+    $payload = !empty($tracking['payload']) ? json_decode($tracking['payload'], true) : null;
+    $sessionToken = bin2hex(random_bytes(32));
+    $sessionHash = hash('sha256', $sessionToken);
 
     // ======================================================
     // 3. MARK AS USED (SINGLE USE CONSUMPTION)
@@ -77,13 +82,15 @@ WHERE uid = :uid
 
     $update = $conn->prepare("
         UPDATE tracking
-        SET status = 'USED'
+        SET status = 'USED', access_session_hash = :session_hash
         WHERE uid = :uid
     ");
 
     $update->execute([
-        'uid' => $uid
+        'uid' => $uid,
+        'session_hash' => $sessionHash
     ]);
+    $conn->commit();
 
     // ======================================================
     // 4. RESPONSE
@@ -92,6 +99,9 @@ WHERE uid = :uid
     echo json_encode([
         'success' => true,
         'payload' => $payload,
+        'orderNumber' => $tracking['order_number'],
+        'sessionToken' => $sessionToken,
+        'attemptsRemaining' => max(0, 2 - (int)($tracking['lookup_attempts'] ?? 0)),
         'tracking' => [
             'uid' => $tracking['uid'],
             'status' => 'USED',
@@ -100,6 +110,10 @@ WHERE uid = :uid
     ]);
 
 } catch (Exception $e) {
+
+    if (isset($conn) && $conn->inTransaction()) {
+        $conn->rollBack();
+    }
 
     http_response_code(500);
 
