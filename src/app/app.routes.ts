@@ -15,10 +15,13 @@ import { KimcoDbChangesComponent } from './kimco-dbchanges/kimco-dbchanges';
 import { TaAdmin } from './ta/ta-admin';
 import { TaFormRenderer } from './ta/ta-form';
 import { Role6Guard } from './guards/role6Guard';
+import { Sandbox } from './sandbox/sandbox';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'customer/:token', component: CxCustomerOMS },
+  { path: 'sandbox', component: Sandbox },
+  { path: 'sandbox/:token', component: Sandbox },
   { path: 'ta/form/:slug', component: TaFormRenderer },
   {
     path: '',

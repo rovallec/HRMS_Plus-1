@@ -28,6 +28,17 @@ export class LoginComponent implements OnInit {
     /** ✅ Handle Azure Entra SSO callback */
     const tokenParam = this.route.snapshot.queryParamMap.get('token');
     if (tokenParam) {
+      // Some production web-server fallbacks rewrite /sandbox?token=... to
+      // /login?token=.... Only recover the exact sandbox token format here;
+      // the backend still validates that it exists, is unused and is valid.
+      if (/^[a-f0-9]{64}$/i.test(tokenParam)) {
+        this.router.navigate(['/sandbox'], {
+          queryParams: { token: tokenParam },
+          replaceUrl: true
+        });
+        return;
+      }
+
       try {
         const user = JSON.parse(atob(tokenParam)); // decode base64 payload
 
