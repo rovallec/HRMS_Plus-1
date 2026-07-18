@@ -170,6 +170,22 @@ try {
         sandboxRespond(['success' => true]);
     }
 
+    if ($action === 'resume') {
+        $sessionToken = trim($body['sessionToken'] ?? '');
+        $requestedClient = canonicalClient($body['client'] ?? '');
+        if (!preg_match('/^[a-f0-9]{64}$/', $sessionToken) || !$requestedClient) {
+            sandboxRespond(['success' => false, 'error' => 'Your sandbox session is invalid.'], 403);
+        }
+        $stmt = $pdo->prepare('SELECT client FROM sandboxTokens WHERE token=:token AND status=0 LIMIT 1');
+        $stmt->execute(['token' => hash('sha256', $sessionToken)]);
+        $storedClients = $stmt->fetchColumn();
+        $clients = $storedClients !== false ? parseSandboxClients((string)$storedClients) : [];
+        if (!in_array($requestedClient, $clients, true)) {
+            sandboxRespond(['success' => false, 'error' => 'This client is not authorized for your sandbox session.'], 403);
+        }
+        sandboxRespond(['success' => true, 'client' => $requestedClient, 'clients' => $clients, 'sessionToken' => $sessionToken]);
+    }
+
     sandboxRespond(['success' => false, 'error' => 'Invalid action.'], 400);
 } catch (Throwable $e) {
     if (isset($pdo) && $pdo->inTransaction()) { $pdo->rollBack(); }

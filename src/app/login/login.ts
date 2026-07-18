@@ -25,6 +25,19 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Production may rewrite a hard /sandbox reload to /login. Resume only
+    // when this browser already owns a sandbox session; no access token is
+    // reactivated or consumed again.
+    const sandboxResume = this.route.snapshot.queryParamMap.get('sandboxSession');
+    const sandboxClient = this.route.snapshot.queryParamMap.get('client');
+    if (sandboxResume === '1' && sandboxClient && sessionStorage.getItem('sandboxSessionToken')) {
+      this.router.navigate(['/sandbox'], {
+        queryParams: { sandboxSession: 1, client: sandboxClient },
+        replaceUrl: true
+      });
+      return;
+    }
+
     /** ✅ Handle Azure Entra SSO callback */
     const tokenParam = this.route.snapshot.queryParamMap.get('token');
     if (tokenParam) {

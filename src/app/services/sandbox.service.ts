@@ -18,6 +18,10 @@ export class SandboxService {
     return this.http.post(this.url, { action: 'access', token });
   }
 
+  resume(sessionToken: string, client: string): Observable<any> {
+    return this.http.post(this.url, { action: 'resume', sessionToken, client });
+  }
+
   saveFeedback(sessionToken: string, feedback: string): Observable<any> {
     return this.http.post(this.url, { action: 'feedback', sessionToken, feedback });
   }

@@ -33,7 +33,17 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     const token = this.route.snapshot.queryParamMap.get('token')
       || this.route.snapshot.paramMap.get('token');
     this.hasAccessToken = !!token;
-    if (token) this.exchangeToken(token);
+    if (token) {
+      this.exchangeToken(token);
+      return;
+    }
+
+    const savedSession = sessionStorage.getItem('sandboxSessionToken');
+    const requestedClient = this.route.snapshot.queryParamMap.get('client')
+      || sessionStorage.getItem('sandboxActiveClient');
+    if (savedSession && requestedClient) {
+      this.resumeSession(savedSession, requestedClient);
+    }
   }
 
   ngAfterViewInit(): void {
@@ -74,6 +84,9 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
           ? res.clients
           : [res.client];
         this.sessionToken = res.sessionToken;
+        sessionStorage.setItem('sandboxSessionToken', this.sessionToken);
+        sessionStorage.setItem('sandboxActiveClient', this.activeClient);
+        window.history.replaceState({}, '', `/sandbox?sandboxSession=1&client=${encodeURIComponent(this.activeClient)}`);
         this.setWidgetKey(this.activeClient);
         setTimeout(() => this.loadWidget());
       },
@@ -83,10 +96,32 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
 
   switchClient(client: string): void {
     if (!this.authorizedClients.includes(client) || client === this.activeClient) return;
-    this.removeWidget();
-    this.activeClient = client;
-    this.setWidgetKey(client);
-    setTimeout(() => this.loadWidget());
+    sessionStorage.setItem('sandboxActiveClient', client);
+    // A hard reload gives each Zendesk snippet a completely clean global
+    // environment. The consumed access token is not reused; resume validates
+    // the already-issued sandbox session instead.
+    window.location.href = `/sandbox?sandboxSession=1&client=${encodeURIComponent(client)}`;
+  }
+
+  private resumeSession(sessionToken: string, client: string): void {
+    this.loading = true;
+    this.api.resume(sessionToken, client).subscribe({
+      next: (res) => {
+        this.loading = false;
+        this.authorized = true;
+        this.activeClient = res.client;
+        this.authorizedClients = res.clients || [res.client];
+        this.sessionToken = sessionToken;
+        this.setWidgetKey(this.activeClient);
+        setTimeout(() => this.loadWidget());
+      },
+      error: (err) => {
+        this.loading = false;
+        sessionStorage.removeItem('sandboxSessionToken');
+        sessionStorage.removeItem('sandboxActiveClient');
+        this.error = err.error?.error || 'Your sandbox session is no longer valid.';
+      }
+    });
   }
 
   clientLabel(client: string): string {
