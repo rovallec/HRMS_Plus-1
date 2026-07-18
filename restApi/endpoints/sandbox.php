@@ -18,9 +18,18 @@ function canonicalClient(string $client): ?string {
     $value = strtolower(preg_replace('/[^a-z0-9]/i', '', $client));
     return match ($value) {
         'colehaan' => 'ColeHaan',
-        'marcjacobs' => 'MarcJacobs',
+        'marcjacobs', 'mjmm', 'mjm' => 'MarcJacobs',
         default => null
     };
+}
+
+function parseSandboxClients(string $storedClients): array {
+    $clients = [];
+    foreach (explode(',', $storedClients) as $storedClient) {
+        $client = canonicalClient($storedClient);
+        if ($client) { $clients[$client] = true; }
+    }
+    return array_keys($clients);
 }
 
 function sendSandboxEmail(string $recipient, string $accessUrl): void {
@@ -101,10 +110,10 @@ try {
             if ($resolvedClient) { $authorizedClients[$resolvedClient] = true; }
         }
 
-        // A sandbox request must resolve to exactly one client. This avoids
-        // exposing or arbitrarily selecting another customer for shared users.
-        if (count($authorizedClients) !== 1) { sandboxRespond($generic); }
-        $client = array_key_first($authorizedClients);
+        if (count($authorizedClients) === 0) { sandboxRespond($generic); }
+        // The token owns the complete authorized client set. It is intentionally
+        // stored on the token so later widget changes never trust browser input.
+        $client = implode(',', array_keys($authorizedClients));
 
         $rawToken = bin2hex(random_bytes(32));
         $tokenHash = hash('sha256', $rawToken);
@@ -137,11 +146,16 @@ try {
         $stmt->execute(['token' => $tokenHash]);
         $row = $stmt->fetch();
         if (!$row) { $pdo->rollBack(); sandboxRespond(['success' => false, 'error' => 'Invalid or already used access link.'], 403); }
+        $clients = parseSandboxClients((string)$row['client']);
+        if (count($clients) === 0) {
+            $pdo->rollBack();
+            sandboxRespond(['success' => false, 'error' => 'No sandbox client is assigned to this access link.'], 403);
+        }
         $sessionToken = bin2hex(random_bytes(32));
         $sessionHash = hash('sha256', $sessionToken);
         $pdo->prepare('UPDATE sandboxTokens SET status=0, token=:sessionHash WHERE idsandboxTokens=:id')->execute(['sessionHash' => $sessionHash, 'id' => $row['idsandboxTokens']]);
         $pdo->commit();
-        sandboxRespond(['success' => true, 'client' => canonicalClient($row['client']), 'sessionToken' => $sessionToken]);
+        sandboxRespond(['success' => true, 'client' => $clients[0], 'clients' => $clients, 'sessionToken' => $sessionToken]);
     }
 
     if ($action === 'feedback') {

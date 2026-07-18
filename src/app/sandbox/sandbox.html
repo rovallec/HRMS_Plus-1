@@ -1,5 +1,16 @@
 <main class="sandbox-page">
-  <header class="sandbox-header"><a href="https://cxperts.us" target="_blank" rel="noopener">cxperts</a><span>AI Sandbox</span></header>
+  <header class="sandbox-header">
+    <a href="https://cxperts.us" target="_blank" rel="noopener">cxperts</a>
+    <div class="header-actions">
+      <span>AI Sandbox</span>
+      <select *ngIf="authorized && authorizedClients.length > 1" class="client-switcher"
+        [ngModel]="activeClient" (ngModelChange)="switchClient($event)" aria-label="Select client sandbox">
+        <option *ngFor="let availableClient of authorizedClients" [value]="availableClient">
+          {{ clientLabel(availableClient) }}
+        </option>
+      </select>
+    </div>
+  </header>
 
   <section class="sandbox-card" *ngIf="loading && !authorized"><div class="loader"></div><p>Validating access…</p></section>
 

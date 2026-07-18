@@ -16,6 +16,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   feedback = '';
   sessionToken = '';
   activeClient = '';
+  authorizedClients: string[] = [];
   loading = false;
   authorized = false;
   requestSent = false;
@@ -69,14 +70,33 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
         this.loading = false;
         this.authorized = true;
         this.activeClient = res.client;
+        this.authorizedClients = Array.isArray(res.clients) && res.clients.length
+          ? res.clients
+          : [res.client];
         this.sessionToken = res.sessionToken;
-        this.widgetKey = res.client === 'MarcJacobs'
-          ? 'c71de9c3-3113-4643-aa00-61f4674ecb1d'
-          : 'ad7b3975-31a2-4995-a60b-1fd9869c9163';
+        this.setWidgetKey(this.activeClient);
         setTimeout(() => this.loadWidget());
       },
       error: (err) => { this.loading = false; this.error = err.error?.error || 'Invalid or already used access link.'; }
     });
+  }
+
+  switchClient(client: string): void {
+    if (!this.authorizedClients.includes(client) || client === this.activeClient) return;
+    this.removeWidget();
+    this.activeClient = client;
+    this.setWidgetKey(client);
+    setTimeout(() => this.loadWidget());
+  }
+
+  clientLabel(client: string): string {
+    return client === 'MarcJacobs' ? 'Marc Jacobs' : 'Cole Haan';
+  }
+
+  private setWidgetKey(client: string): void {
+    this.widgetKey = client === 'MarcJacobs'
+      ? 'c71de9c3-3113-4643-aa00-61f4674ecb1d'
+      : 'ad7b3975-31a2-4995-a60b-1fd9869c9163';
   }
 
   private loadWidget(): void {
@@ -89,7 +109,19 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.removeWidget();
+  }
+
+  private removeWidget(): void {
+    const zendesk = (window as any).zE;
+    if (typeof zendesk === 'function') {
+      try { zendesk('messenger', 'close'); } catch { /* widget may not be ready */ }
+    }
     document.getElementById('ze-snippet')?.remove();
-    document.querySelectorAll('iframe[title*="messaging" i], iframe[title*="chat" i]').forEach(element => element.remove());
+    document.querySelectorAll(
+      'iframe[title*="messaging" i], iframe[title*="chat" i], #webWidget, [data-garden-id="chrome.container"]'
+    ).forEach(element => element.remove());
+    delete (window as any).zE;
+    delete (window as any).zESettings;
   }
 }
