@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{width:100%;height:100%;margin:0;overflow:hidden;background:transparent}</style></head><body>
+<script>
+(() => {
+  const allowedKeys = new Set(['ad7b3975-31a2-4995-a60b-1fd9869c9163','c71de9c3-3113-4643-aa00-61f4674ecb1d']);
+  const key = new URLSearchParams(location.search).get('key');
+  if (!key || !allowedKeys.has(key)) return;
+  window.zE = window.zE || function(){ (window.zE.q = window.zE.q || []).push(arguments); };
+  const script = document.createElement('script');
+  script.id = 'ze-snippet';
+  script.src = `https://static.zdassets.com/ekr/snippet.js?key=${encodeURIComponent(key)}`;
+  script.onload = () => window.zE('messenger', 'hide');
+  document.head.appendChild(script);
+  window.addEventListener('message', event => {
+    if (event.origin !== location.origin || event.data?.type !== 'cx-sandbox-open-zendesk') return;
+    window.zE('messenger', 'show');
+    window.zE('messenger', 'open');
+  });
+})();
+</script></body></html>

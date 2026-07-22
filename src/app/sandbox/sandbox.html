@@ -51,8 +51,15 @@
     <button *ngIf="!feedbackSaved" (click)="saveFeedback()" [disabled]="loading || !feedback.trim()">Submit feedback</button>
   </section>
 
-  <button *ngIf="authorized && displayMode === 'stick' && !isWidgetOpen" type="button" class="sticky-launcher"
-    (click)="openStickyWidget()" aria-label="Open Zendesk chat">
-    <span class="sticky-chat-icon" aria-hidden="true">⌁</span><span>Chat</span>
+  <iframe *ngIf="authorized && displayMode === 'stick'" #zendeskFrame class="sticky-chat-frame"
+    [class.open]="isWidgetOpen" [src]="stickyFrameUrl" (load)="onStickyFrameLoad()"
+    title="Zendesk chat sandbox"></iframe>
+
+  <button *ngIf="authorized && displayMode === 'stick'" type="button" class="sticky-launcher"
+    [class.open]="isWidgetOpen" (click)="openStickyWidget()"
+    [attr.aria-label]="isWidgetOpen ? 'Hide Zendesk chat' : 'Open Zendesk chat'">
+    <span class="sticky-chat-icon" aria-hidden="true"><i></i></span>
+    <span>{{ isWidgetOpen ? 'Hide chat' : 'Open chat' }}</span>
+    <span class="sticky-chevron" aria-hidden="true">{{ isWidgetOpen ? '›' : '‹' }}</span>
   </button>
 </main>

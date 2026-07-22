@@ -1,7 +1,8 @@
-import { AfterViewInit, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { SandboxService } from '../services/sandbox.service';
 
 @Component({
@@ -19,6 +20,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   authorizedClients: string[] = [];
   displayMode: 'float' | 'stick' = 'float';
   isWidgetOpen = false;
+  stickyFrameUrl: SafeResourceUrl | null = null;
   loading = false;
   authorized = false;
   requestSent = false;
@@ -27,7 +29,9 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   hasAccessToken = false;
   private widgetKey = '';
 
-  constructor(private route: ActivatedRoute, private api: SandboxService, private zone: NgZone) {}
+  @ViewChild('zendeskFrame') zendeskFrame?: ElementRef<HTMLIFrameElement>;
+
+  constructor(private route: ActivatedRoute, private api: SandboxService, private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
     // Query-string tokens are preferred for production deep links; retain the
@@ -145,84 +149,34 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     this.widgetKey = client === 'MarcJacobs'
       ? 'c71de9c3-3113-4643-aa00-61f4674ecb1d'
       : 'ad7b3975-31a2-4995-a60b-1fd9869c9163';
+    this.stickyFrameUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
+      `/zendesk-frame.html?key=${encodeURIComponent(this.widgetKey)}`
+    );
   }
 
   private loadWidget(): void {
+    if (this.displayMode === 'stick') return;
     if (!this.widgetKey || document.getElementById('ze-snippet')) return;
     const script = document.createElement('script');
     script.id = 'ze-snippet';
     script.src = `https://static.zdassets.com/ekr/snippet.js?key=${this.widgetKey}`;
     script.async = true;
-    script.addEventListener('load', () => {
-      if (this.displayMode === 'stick') {
-        setTimeout(() => this.configureStickyLauncher(), 250);
-      }
-    });
     document.body.appendChild(script);
   }
 
   openStickyWidget(): void {
-    const zendesk = (window as any).zE;
-    if (typeof zendesk !== 'function') return;
-    this.isWidgetOpen = true;
-    document.body.classList.add('zendesk-stick-open');
-    zendesk('messenger', 'show');
-    zendesk('messenger', 'open');
+    this.isWidgetOpen = !this.isWidgetOpen;
+    if (this.isWidgetOpen) this.sendOpenToStickyFrame();
   }
 
-  private configureStickyLauncher(): void {
-    const zendesk = (window as any).zE;
-    if (typeof zendesk !== 'function') return;
-    this.installStickyWidgetStyles();
-    zendesk('messenger', 'hide');
-    try {
-      zendesk('messenger:on', 'open', () => this.zone.run(() => {
-        this.isWidgetOpen = true;
-        document.body.classList.add('zendesk-stick-open');
-      }));
-      zendesk('messenger:on', 'close', () => this.zone.run(() => {
-        this.isWidgetOpen = false;
-        document.body.classList.remove('zendesk-stick-open');
-        zendesk('messenger', 'hide');
-      }));
-    } catch { /* Older Messaging configurations may not expose events. */ }
+  onStickyFrameLoad(): void {
+    if (this.isWidgetOpen) this.sendOpenToStickyFrame();
   }
 
-  private installStickyWidgetStyles(): void {
-    if (document.getElementById('zendesk-stick-styles')) return;
-    const style = document.createElement('style');
-    style.id = 'zendesk-stick-styles';
-    style.textContent = `
-      body.zendesk-stick-mode iframe[title*="messaging window" i]:not([title*="button" i]) {
-        position: fixed !important;
-        top: 50% !important;
-        right: 0 !important;
-        bottom: auto !important;
-        left: auto !important;
-        max-height: calc(100vh - 40px) !important;
-        transform: translate(105%, -50%) !important;
-        transform-origin: right center !important;
-        transition: transform .28s ease-out, opacity .2s ease-out !important;
-        border-radius: 14px 0 0 14px !important;
-        box-shadow: -12px 16px 40px rgba(16, 43, 78, .24) !important;
-      }
-      body.zendesk-stick-mode.zendesk-stick-open iframe[title*="messaging window" i]:not([title*="button" i]) {
-        transform: translate(0, -50%) !important;
-      }
-      @media (max-width: 600px) {
-        body.zendesk-stick-mode iframe[title*="messaging window" i]:not([title*="button" i]) {
-          top: 0 !important;
-          max-height: 100vh !important;
-          transform: translateX(105%) !important;
-          border-radius: 0 !important;
-        }
-        body.zendesk-stick-mode.zendesk-stick-open iframe[title*="messaging window" i]:not([title*="button" i]) {
-          transform: translateX(0) !important;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-    document.body.classList.add('zendesk-stick-mode');
+  private sendOpenToStickyFrame(): void {
+    this.zendeskFrame?.nativeElement.contentWindow?.postMessage(
+      { type: 'cx-sandbox-open-zendesk' }, window.location.origin
+    );
   }
 
   private sandboxUrl(client: string, mode: 'float' | 'stick'): string {
@@ -244,7 +198,5 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     ).forEach(element => element.remove());
     delete (window as any).zE;
     delete (window as any).zESettings;
-    document.body.classList.remove('zendesk-stick-mode', 'zendesk-stick-open');
-    document.getElementById('zendesk-stick-styles')?.remove();
   }
 }
