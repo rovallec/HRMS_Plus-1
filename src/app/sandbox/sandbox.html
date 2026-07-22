@@ -51,8 +51,8 @@
     <button *ngIf="!feedbackSaved" (click)="saveFeedback()" [disabled]="loading || !feedback.trim()">Submit feedback</button>
   </section>
 
-  <button *ngIf="authorized && displayMode === 'stick'" type="button" class="sticky-launcher"
-    (click)="openStickyWidget()" aria-label="Open feedback chat">
-    <span class="sticky-chat-icon" aria-hidden="true">⌁</span><span>Feedback</span>
+  <button *ngIf="authorized && displayMode === 'stick' && !isWidgetOpen" type="button" class="sticky-launcher"
+    (click)="openStickyWidget()" aria-label="Open Zendesk chat">
+    <span class="sticky-chat-icon" aria-hidden="true">⌁</span><span>Chat</span>
   </button>
 </main>
