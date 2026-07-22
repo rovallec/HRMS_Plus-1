@@ -58,7 +58,7 @@
   <button *ngIf="authorized && displayMode === 'stick'" type="button" class="sticky-launcher"
     [class.open]="isWidgetOpen" (click)="openStickyWidget()"
     [attr.aria-label]="isWidgetOpen ? 'Hide Zendesk chat' : 'Open Zendesk chat'">
-    <span class="sticky-chat-icon" aria-hidden="true"><i></i></span>
+    <span class="sticky-chat-icon" aria-hidden="true"><i class="bi bi-chat-dots-fill"></i></span>
     <span>{{ isWidgetOpen ? 'Hide chat' : 'Open chat' }}</span>
     <span class="sticky-chevron" aria-hidden="true">{{ isWidgetOpen ? '›' : '‹' }}</span>
   </button>

@@ -6,16 +6,39 @@
   const allowedKeys = new Set(['ad7b3975-31a2-4995-a60b-1fd9869c9163','c71de9c3-3113-4643-aa00-61f4674ecb1d']);
   const key = new URLSearchParams(location.search).get('key');
   if (!key || !allowedKeys.has(key)) return;
-  window.zE = window.zE || function(){ (window.zE.q = window.zE.q || []).push(arguments); };
+  let zendeskReady = false;
+  let openRequested = false;
+
+  const openMessenger = () => {
+    if (!zendeskReady || typeof window.zE !== 'function') {
+      openRequested = true;
+      return;
+    }
+    openRequested = false;
+    window.zE('messenger', 'hide');
+    window.zE('messenger', 'show');
+    window.zE('messenger', 'open');
+    // Some configurations finish mounting after the snippet load event. A
+    // second open is harmless and prevents the minimized launcher state.
+    window.setTimeout(() => {
+      window.zE('messenger', 'show');
+      window.zE('messenger', 'open');
+    }, 600);
+  };
+
   const script = document.createElement('script');
   script.id = 'ze-snippet';
   script.src = `https://static.zdassets.com/ekr/snippet.js?key=${encodeURIComponent(key)}`;
-  script.onload = () => window.zE('messenger', 'hide');
+  script.onload = () => {
+    zendeskReady = true;
+    window.zE('messenger', 'hide');
+    if (openRequested) window.setTimeout(openMessenger, 150);
+  };
   document.head.appendChild(script);
   window.addEventListener('message', event => {
     if (event.origin !== location.origin || event.data?.type !== 'cx-sandbox-open-zendesk') return;
-    window.zE('messenger', 'show');
-    window.zE('messenger', 'open');
+    openRequested = true;
+    openMessenger();
   });
 })();
 </script></body></html>
