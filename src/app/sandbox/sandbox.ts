@@ -21,6 +21,8 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   displayMode: 'float' | 'stick' = 'float';
   isWidgetOpen = false;
   stickyFrameUrl: SafeResourceUrl | null = null;
+  contentView: 'feedback' | 'code' = 'feedback';
+  activeCodeTab: 'html' | 'css' | 'ts' = 'html';
   loading = false;
   authorized = false;
   requestSent = false;
@@ -144,6 +146,50 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   clientLabel(client: string): string {
     return client === 'MarcJacobs' ? 'Marc Jacobs' : 'Cole Haan';
   }
+
+  showCodeGuide(): void {
+    this.contentView = 'code';
+  }
+
+  showFeedback(): void {
+    this.contentView = 'feedback';
+  }
+
+  get codeSections(): Array<{ kind: 'zendesk' | 'design' | 'launcher' | 'base'; text: string }> {
+    const examples = this.displayMode === 'stick' ? this.stickCodeExamples : this.floatCodeExamples;
+    return examples[this.activeCodeTab];
+  }
+
+  private readonly floatCodeExamples = {
+    html: [
+      { kind: 'zendesk' as const, text: `<!-- Zendesk Messaging -->\n<script id="ze-snippet"\n  src="https://static.zdassets.com/ekr/snippet.js?key=YOUR_ZENDESK_KEY">\n</script>` },
+      { kind: 'launcher' as const, text: `\n\n<!-- Zendesk renders its native floating launcher automatically. -->` }
+    ],
+    css: [
+      { kind: 'base' as const, text: `/* No positioning CSS is required in Float mode. */\n` },
+      { kind: 'design' as const, text: `.sandbox-content {\n  min-height: 100vh;\n  background: #f6f7f9;\n}` }
+    ],
+    ts: [
+      { kind: 'zendesk' as const, text: `loadZendesk(): void {\n  const script = document.createElement('script');\n  script.id = 'ze-snippet';\n  script.src =\n    'https://static.zdassets.com/ekr/snippet.js?key=YOUR_ZENDESK_KEY';\n  script.async = true;\n  document.body.appendChild(script);\n}` }
+    ]
+  };
+
+  private readonly stickCodeExamples = {
+    html: [
+      { kind: 'design' as const, text: `<div class="chat-shell" [class.open]="chatOpen">\n  <iframe\n    #chatFrame\n    src="/zendesk-frame.html?key=YOUR_ZENDESK_KEY"\n    title="Customer support chat">\n  </iframe>\n</div>` },
+      { kind: 'launcher' as const, text: `\n\n<button class="chat-launcher" (click)="toggleChat()">\n  <i class="bi bi-chat-dots-fill"></i>\n  <span>{{ chatOpen ? 'Hide chat' : 'Open chat' }}</span>\n</button>` },
+      { kind: 'zendesk' as const, text: `\n\n<!-- zendesk-frame.html loads Zendesk with YOUR_ZENDESK_KEY,\n     hides its native launcher, and opens Messaging on request. -->` }
+    ],
+    css: [
+      { kind: 'design' as const, text: `.chat-shell {\n  position: fixed;\n  top: 50%;\n  right: 2rem;\n  width: min(430px, calc(100vw - 100px));\n  height: min(700px, calc(100vh - 64px));\n  opacity: 0;\n  pointer-events: none;\n  transform: translate(115%, -50%) scale(.98);\n  transition: transform .34s ease, opacity .2s ease;\n}\n\n.chat-shell.open {\n  opacity: 1;\n  pointer-events: auto;\n  transform: translate(0, -50%) scale(1);\n}` },
+      { kind: 'launcher' as const, text: `\n\n.chat-launcher {\n  position: fixed;\n  right: 0;\n  top: 50%;\n  border-radius: 15px 0 0 15px;\n  background: #102b4e;\n  color: white;\n}\n\n.chat-launcher.open {\n  /* Move the controller with the panel. */\n  right: calc(2rem + min(430px, calc(100vw - 100px)));\n}` }
+    ],
+    ts: [
+      { kind: 'launcher' as const, text: `chatOpen = false;\n\ntoggleChat(): void {\n  this.chatOpen = !this.chatOpen;\n  if (this.chatOpen) this.openZendeskInsideFrame();\n}` },
+      { kind: 'zendesk' as const, text: `\n\nopenZendeskInsideFrame(): void {\n  this.chatFrame.nativeElement.contentWindow?.postMessage(\n    { type: 'open-zendesk-messaging' },\n    window.location.origin\n  );\n}` },
+      { kind: 'design' as const, text: `\n\n// The outer iframe is animated by the host page.\n// Zendesk remains mounted, so hiding the panel preserves the conversation.` }
+    ]
+  };
 
   private setWidgetKey(client: string): void {
     this.widgetKey = client === 'MarcJacobs'
