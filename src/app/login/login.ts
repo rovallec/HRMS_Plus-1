@@ -30,9 +30,10 @@ export class LoginComponent implements OnInit {
     // reactivated or consumed again.
     const sandboxResume = this.route.snapshot.queryParamMap.get('sandboxSession');
     const sandboxClient = this.route.snapshot.queryParamMap.get('client');
+    const sandboxMode = this.route.snapshot.queryParamMap.get('mode');
     if (sandboxResume === '1' && sandboxClient && sessionStorage.getItem('sandboxSessionToken')) {
       this.router.navigate(['/sandbox'], {
-        queryParams: { sandboxSession: 1, client: sandboxClient },
+        queryParams: { sandboxSession: 1, client: sandboxClient, mode: sandboxMode === 'stick' ? 'stick' : 'float' },
         replaceUrl: true
       });
       return;

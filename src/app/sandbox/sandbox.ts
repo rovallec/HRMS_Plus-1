@@ -17,6 +17,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   sessionToken = '';
   activeClient = '';
   authorizedClients: string[] = [];
+  displayMode: 'float' | 'stick' = 'float';
   loading = false;
   authorized = false;
   requestSent = false;
@@ -41,6 +42,9 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     const savedSession = sessionStorage.getItem('sandboxSessionToken');
     const requestedClient = this.route.snapshot.queryParamMap.get('client')
       || sessionStorage.getItem('sandboxActiveClient');
+    const requestedMode = this.route.snapshot.queryParamMap.get('mode')
+      || sessionStorage.getItem('sandboxDisplayMode');
+    this.displayMode = requestedMode === 'stick' ? 'stick' : 'float';
     if (savedSession && requestedClient) {
       this.resumeSession(savedSession, requestedClient);
     }
@@ -86,7 +90,8 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
         this.sessionToken = res.sessionToken;
         sessionStorage.setItem('sandboxSessionToken', this.sessionToken);
         sessionStorage.setItem('sandboxActiveClient', this.activeClient);
-        window.history.replaceState({}, '', `/sandbox?sandboxSession=1&client=${encodeURIComponent(this.activeClient)}`);
+        sessionStorage.setItem('sandboxDisplayMode', this.displayMode);
+        window.history.replaceState({}, '', this.sandboxUrl(this.activeClient, this.displayMode));
         this.setWidgetKey(this.activeClient);
         setTimeout(() => this.loadWidget());
       },
@@ -100,7 +105,13 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     // A hard reload gives each Zendesk snippet a completely clean global
     // environment. The consumed access token is not reused; resume validates
     // the already-issued sandbox session instead.
-    window.location.href = `/sandbox?sandboxSession=1&client=${encodeURIComponent(client)}`;
+    window.location.href = this.sandboxUrl(client, this.displayMode);
+  }
+
+  switchDisplayMode(mode: 'float' | 'stick'): void {
+    if (!this.authorized || mode === this.displayMode) return;
+    sessionStorage.setItem('sandboxDisplayMode', mode);
+    window.location.href = this.sandboxUrl(this.activeClient, mode);
   }
 
   private resumeSession(sessionToken: string, client: string): void {
@@ -112,6 +123,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
         this.activeClient = res.client;
         this.authorizedClients = res.clients || [res.client];
         this.sessionToken = sessionToken;
+        sessionStorage.setItem('sandboxDisplayMode', this.displayMode);
         this.setWidgetKey(this.activeClient);
         setTimeout(() => this.loadWidget());
       },
@@ -140,7 +152,32 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     script.id = 'ze-snippet';
     script.src = `https://static.zdassets.com/ekr/snippet.js?key=${this.widgetKey}`;
     script.async = true;
+    script.addEventListener('load', () => {
+      if (this.displayMode === 'stick') {
+        setTimeout(() => this.configureStickyLauncher(), 250);
+      }
+    });
     document.body.appendChild(script);
+  }
+
+  openStickyWidget(): void {
+    const zendesk = (window as any).zE;
+    if (typeof zendesk !== 'function') return;
+    zendesk('messenger', 'show');
+    zendesk('messenger', 'open');
+  }
+
+  private configureStickyLauncher(): void {
+    const zendesk = (window as any).zE;
+    if (typeof zendesk !== 'function') return;
+    zendesk('messenger', 'hide');
+    try {
+      zendesk('messenger:on', 'close', () => zendesk('messenger', 'hide'));
+    } catch { /* Older Messaging configurations may not expose events. */ }
+  }
+
+  private sandboxUrl(client: string, mode: 'float' | 'stick'): string {
+    return `/sandbox?sandboxSession=1&client=${encodeURIComponent(client)}&mode=${mode}`;
   }
 
   ngOnDestroy(): void {

@@ -1,6 +1,14 @@
 <main class="sandbox-page">
   <header class="sandbox-header">
-    <a href="https://cxperts.us" target="_blank" rel="noopener">cxperts</a>
+    <div class="header-left">
+      <a href="https://cxperts.us" target="_blank" rel="noopener">cxperts</a>
+      <div *ngIf="authorized" class="mode-switch" aria-label="Widget position">
+        <button type="button" [class.active]="displayMode === 'float'" (click)="switchDisplayMode('float')"
+          title="Use Zendesk's floating launcher"><span class="float-icon"></span>Float</button>
+        <button type="button" [class.active]="displayMode === 'stick'" (click)="switchDisplayMode('stick')"
+          title="Attach a custom launcher to the right edge"><span class="stick-icon"></span>Stick</button>
+      </div>
+    </div>
     <div class="header-actions">
       <span>AI Sandbox</span>
       <select *ngIf="authorized && authorizedClients.length > 1" class="client-switcher"
@@ -42,4 +50,9 @@
     <div class="saved" *ngIf="feedbackSaved">Thank you. Your feedback has been saved.</div>
     <button *ngIf="!feedbackSaved" (click)="saveFeedback()" [disabled]="loading || !feedback.trim()">Submit feedback</button>
   </section>
+
+  <button *ngIf="authorized && displayMode === 'stick'" type="button" class="sticky-launcher"
+    (click)="openStickyWidget()" aria-label="Open feedback chat">
+    <span class="sticky-chat-icon" aria-hidden="true">⌁</span><span>Feedback</span>
+  </button>
 </main>
