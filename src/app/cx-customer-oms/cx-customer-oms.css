@@ -122,3 +122,7 @@ html, body {
 .attempts-text { margin: 10px 0; font-size: 12px; color: #777; }
 .lookup-button { width: 100%; border: 0; border-radius: 6px; padding: 11px 16px; background: #0b1d39; color: #fff; font-weight: 600; }
 .lookup-button:disabled { opacity: .65; cursor: not-allowed; }
+.order-number-row { margin-bottom: 14px; }
+.order-number-row p { margin-bottom: 4px; }
+.order-number-edit { margin-bottom: 8px; }
+.change-order-link { display:inline-block; color:#0b1d39; font-size:12px; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }

@@ -30,6 +30,8 @@ export class CxCustomerOMS implements OnInit {
   requiresEmail: boolean = false;
   isSubmittingEmail: boolean = false;
   lookupError: string = '';
+  canChangeOrderNumber: boolean = false;
+  isEditingOrderNumber: boolean = false;
 
   constructor(private route: ActivatedRoute, private api: AppeasementService) {}
 
@@ -66,6 +68,7 @@ const payload = res.payload;
 this.orderNumber = res.orderNumber || payload?.order?.orderNumber || '';
 this.sessionToken = res.sessionToken || '';
 this.attemptsRemaining = res.attemptsRemaining ?? 0;
+this.canChangeOrderNumber = res.canChangeOrderNumber === true;
 this.requiresEmail = !payload && this.attemptsRemaining > 0;
 this.orderData = payload?.order || null;
 
@@ -130,10 +133,21 @@ this.orderData = payload?.order || null;
     this.isSubmittingEmail = true;
     this.lookupError = '';
 
-    this.api.lookupCustomerTracking(this.token, this.sessionToken, email).subscribe({
+    const changedOrderNumber = this.isEditingOrderNumber ? this.orderNumber.trim() : undefined;
+    if (this.isEditingOrderNumber && !changedOrderNumber) {
+      this.lookupError = 'Please enter a valid order number.';
+      return;
+    }
+    if (this.isEditingOrderNumber) {
+      this.canChangeOrderNumber = false;
+      this.isEditingOrderNumber = false;
+    }
+
+    this.api.lookupCustomerTracking(this.token, this.sessionToken, email, changedOrderNumber).subscribe({
       next: (res: any) => {
         this.isSubmittingEmail = false;
         this.attemptsRemaining = res.attemptsRemaining ?? this.attemptsRemaining;
+        this.canChangeOrderNumber = res.canChangeOrderNumber ?? this.canChangeOrderNumber;
 
         if (!res.success) {
           this.lookupError = res.error || 'We could not find the order with that email address.';
@@ -147,9 +161,15 @@ this.orderData = payload?.order || null;
       error: (err) => {
         this.isSubmittingEmail = false;
         this.attemptsRemaining = err.error?.attemptsRemaining ?? this.attemptsRemaining;
+        this.canChangeOrderNumber = err.error?.canChangeOrderNumber ?? this.canChangeOrderNumber;
         this.requiresEmail = this.attemptsRemaining > 0;
         this.lookupError = err.error?.error || 'The order service is unavailable. Please try again.';
       }
     });
+  }
+
+  enableOrderNumberEdit(): void {
+    if (!this.canChangeOrderNumber) return;
+    this.isEditingOrderNumber = true;
   }
 }

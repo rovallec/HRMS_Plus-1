@@ -44,7 +44,18 @@
             <div *ngIf="requiresEmail" class="email-lookup">
               <h4 class="mb-3 section-title">Find Your Order</h4>
               <div class="blue-separator"></div>
-              <p><strong>Order #:</strong> {{ orderNumber }}</p>
+              <div class="order-number-row">
+                <p *ngIf="!isEditingOrderNumber"><strong>Order #:</strong> {{ orderNumber }}</p>
+                <div *ngIf="isEditingOrderNumber" class="order-number-edit">
+                  <label for="orderNumber" class="form-label">Order #</label>
+                  <input id="orderNumber" type="text" class="form-control" [(ngModel)]="orderNumber"
+                    [disabled]="isSubmittingEmail" autocomplete="off" />
+                </div>
+                <a *ngIf="canChangeOrderNumber && !isEditingOrderNumber" href="#"
+                  class="change-order-link" (click)="$event.preventDefault(); enableOrderNumberEdit()">
+                  Change order number
+                </a>
+              </div>
               <p class="text-muted">Enter the email address used to place this order.</p>
               <label for="orderEmail" class="form-label">Email address</label>
               <input id="orderEmail" type="email" class="form-control" [(ngModel)]="email"

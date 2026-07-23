@@ -20,6 +20,7 @@ try {
     $uid = trim($input['token'] ?? '');
     $sessionToken = trim($input['sessionToken'] ?? '');
     $email = trim($input['email'] ?? '');
+    $requestedOrderNumber = trim($input['orderNumber'] ?? '');
 
     if (!$uid || !$sessionToken || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         respond(['success' => false, 'error' => 'Invalid request.'], 400);
@@ -35,6 +36,32 @@ try {
     if (!$tracking || empty($tracking['access_session_hash']) || !hash_equals($tracking['access_session_hash'], hash('sha256', $sessionToken))) {
         $conn->rollBack();
         respond(['success' => false, 'error' => 'This access session is invalid or expired.'], 403);
+    }
+
+    if ($requestedOrderNumber !== '' && $requestedOrderNumber !== $tracking['order_number']) {
+        if ((bool)($tracking['order_number_changed'] ?? false)) {
+            $conn->rollBack();
+            respond([
+                'success' => false,
+                'error' => 'The order number has already been changed.',
+                'attemptsRemaining' => max(0, 2 - (int)$tracking['lookup_attempts']),
+                'canChangeOrderNumber' => false
+            ], 409);
+        }
+        if (mb_strlen($requestedOrderNumber) > 100) {
+            $conn->rollBack();
+            respond(['success' => false, 'error' => 'Invalid order number.'], 400);
+        }
+
+        $changeOrder = $conn->prepare('UPDATE [order] SET order_number=:order_number WHERE id=:id_order');
+        $changeOrder->execute([
+            'order_number' => $requestedOrderNumber,
+            'id_order' => $tracking['id_order']
+        ]);
+        $markChanged = $conn->prepare('UPDATE tracking SET order_number_changed=1 WHERE id=:id');
+        $markChanged->execute(['id' => $tracking['id']]);
+        $tracking['order_number'] = $requestedOrderNumber;
+        $tracking['order_number_changed'] = 1;
     }
     if (!empty($tracking['payload'])) {
         $conn->rollBack();

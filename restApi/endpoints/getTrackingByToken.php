@@ -102,6 +102,7 @@ WHERE t.uid = :uid
         'orderNumber' => $tracking['order_number'],
         'sessionToken' => $sessionToken,
         'attemptsRemaining' => max(0, 2 - (int)($tracking['lookup_attempts'] ?? 0)),
+        'canChangeOrderNumber' => !(bool)($tracking['order_number_changed'] ?? false),
         'tracking' => [
             'uid' => $tracking['uid'],
             'status' => 'USED',

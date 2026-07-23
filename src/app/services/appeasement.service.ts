@@ -277,10 +277,10 @@ getTrackingByToken(token: string): Observable<any> {
 
 }
 
-lookupCustomerTracking(token: string, sessionToken: string, email: string): Observable<any> {
+lookupCustomerTracking(token: string, sessionToken: string, email: string, orderNumber?: string): Observable<any> {
   return this.http.post<any>(
     `${this.API_URL}/lookupCustomerTracking.php`,
-    { token, sessionToken, email }
+    { token, sessionToken, email, orderNumber }
   );
 }
 // ===============================
