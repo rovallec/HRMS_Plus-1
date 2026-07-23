@@ -33,7 +33,11 @@ export class LoginComponent implements OnInit {
     const sandboxMode = this.route.snapshot.queryParamMap.get('mode');
     if (sandboxResume === '1' && sandboxClient && sessionStorage.getItem('sandboxSessionToken')) {
       this.router.navigate(['/sandbox'], {
-        queryParams: { sandboxSession: 1, client: sandboxClient, mode: sandboxMode === 'stick' ? 'stick' : 'float' },
+        queryParams: {
+          sandboxSession: 1,
+          client: sandboxClient,
+          mode: ['float', 'stick', 'link', 'button'].includes(sandboxMode || '') ? sandboxMode : 'float'
+        },
         replaceUrl: true
       });
       return;

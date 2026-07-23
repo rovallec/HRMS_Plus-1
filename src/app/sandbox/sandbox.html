@@ -7,6 +7,10 @@
           title="Use Zendesk's floating launcher"><span class="float-icon"></span>Float</button>
         <button type="button" [class.active]="displayMode === 'stick'" (click)="switchDisplayMode('stick')"
           title="Attach a custom launcher to the right edge"><span class="stick-icon"></span>Stick</button>
+        <button type="button" [class.active]="displayMode === 'link'" (click)="switchDisplayMode('link')"
+          title="Open chat from a text link"><i class="bi bi-link-45deg"></i>Link</button>
+        <button type="button" [class.active]="displayMode === 'button'" (click)="switchDisplayMode('button')"
+          title="Open chat from a custom button"><i class="bi bi-square-fill"></i>Button</button>
       </div>
     </div>
     <div class="header-actions">
@@ -43,6 +47,13 @@
 
   <section class="sandbox-card feedback-card content-panel" *ngIf="authorized && contentView === 'feedback'">
     <div class="eyebrow">{{ activeClient === 'MarcJacobs' ? 'MARC JACOBS' : 'COLE HAAN' }} SANDBOX</div>
+    <div class="custom-launcher-stage" *ngIf="displayMode === 'link' || displayMode === 'button'">
+      <span class="stage-label">CUSTOM CONTACT ENTRY</span>
+      <a *ngIf="displayMode === 'link'" href="#contact" class="contact-demo-link"
+        (click)="openModalWidget($event)">Contact us <i class="bi bi-arrow-up-right"></i></a>
+      <button *ngIf="displayMode === 'button'" type="button" class="contact-demo-button"
+        (click)="openModalWidget()"><i class="bi bi-chat-dots-fill"></i>Contact us</button>
+    </div>
     <h1>How did the AI do?</h1>
     <p class="intro">Open the chat bubble to test the experience, then leave your feedback below.</p>
     <textarea [(ngModel)]="feedback" maxlength="5000" rows="7" [disabled]="feedbackSaved" placeholder="Share observations, issues or suggestions…"></textarea>
@@ -56,7 +67,7 @@
   <section class="sandbox-card code-card content-panel reverse" *ngIf="authorized && contentView === 'code'">
     <button type="button" class="content-nav previous" (click)="showFeedback()" aria-label="Return to feedback"
       title="Back to feedback"><i class="bi bi-chevron-left"></i></button>
-    <div class="eyebrow">{{ displayMode === 'stick' ? 'STICK' : 'FLOAT' }} IMPLEMENTATION</div>
+    <div class="eyebrow">{{ displayMode | uppercase }} IMPLEMENTATION</div>
     <h1>Code guide</h1>
     <p class="intro">A reusable example specific to Zendesk implementations.</p>
 
@@ -86,4 +97,16 @@
     <span>{{ isWidgetOpen ? 'Hide chat' : 'Open chat' }}</span>
     <span class="sticky-chevron" aria-hidden="true">{{ isWidgetOpen ? '›' : '‹' }}</span>
   </button>
+
+  <div *ngIf="authorized && (displayMode === 'link' || displayMode === 'button')"
+    class="modal-chat-layer" [class.open]="isWidgetOpen" [attr.aria-hidden]="!isWidgetOpen">
+    <button type="button" class="modal-backdrop" (click)="closeModalWidget()" aria-label="Close chat"></button>
+    <div class="modal-chat-shell">
+      <button type="button" class="modal-close" (click)="closeModalWidget()" aria-label="Close chat">
+        <i class="bi bi-x-lg"></i>
+      </button>
+      <iframe #zendeskFrame class="modal-chat-frame" [src]="stickyFrameUrl" (load)="onStickyFrameLoad()"
+        title="Zendesk contact dialog"></iframe>
+    </div>
+  </div>
 </main>

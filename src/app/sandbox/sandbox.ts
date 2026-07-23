@@ -18,7 +18,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   sessionToken = '';
   activeClient = '';
   authorizedClients: string[] = [];
-  displayMode: 'float' | 'stick' = 'float';
+  displayMode: 'float' | 'stick' | 'link' | 'button' = 'float';
   isWidgetOpen = false;
   stickyFrameUrl: SafeResourceUrl | null = null;
   contentView: 'feedback' | 'code' = 'feedback';
@@ -51,7 +51,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
       || sessionStorage.getItem('sandboxActiveClient');
     const requestedMode = this.route.snapshot.queryParamMap.get('mode')
       || sessionStorage.getItem('sandboxDisplayMode');
-    this.displayMode = requestedMode === 'stick' ? 'stick' : 'float';
+    this.displayMode = this.isDisplayMode(requestedMode) ? requestedMode : 'float';
     if (savedSession && requestedClient) {
       this.resumeSession(savedSession, requestedClient);
     }
@@ -115,7 +115,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     window.location.href = this.sandboxUrl(client, this.displayMode);
   }
 
-  switchDisplayMode(mode: 'float' | 'stick'): void {
+  switchDisplayMode(mode: 'float' | 'stick' | 'link' | 'button'): void {
     if (!this.authorized || mode === this.displayMode) return;
     sessionStorage.setItem('sandboxDisplayMode', mode);
     window.location.href = this.sandboxUrl(this.activeClient, mode);
@@ -156,7 +156,13 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   }
 
   get codeSections(): Array<{ kind: 'zendesk' | 'design' | 'launcher' | 'base'; text: string }> {
-    const examples = this.displayMode === 'stick' ? this.stickCodeExamples : this.floatCodeExamples;
+    const examples = this.displayMode === 'stick'
+      ? this.stickCodeExamples
+      : this.displayMode === 'link'
+        ? this.linkCodeExamples
+        : this.displayMode === 'button'
+          ? this.buttonCodeExamples
+          : this.floatCodeExamples;
     return examples[this.activeCodeTab];
   }
 
@@ -192,6 +198,38 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     ]
   };
 
+  private readonly linkCodeExamples = {
+    html: [
+      { kind: 'launcher' as const, text: `<a href="#support" class="contact-link" (click)="openChat($event)">\n  Contact us\n  <i class="bi bi-arrow-up-right"></i>\n</a>` },
+      { kind: 'design' as const, text: `\n\n<div class="chat-modal" [class.open]="chatOpen">\n  <iframe src="/zendesk-frame.html?key=YOUR_ZENDESK_KEY"\n    title="Customer support chat"></iframe>\n</div>` },
+      { kind: 'zendesk' as const, text: `\n\n<!-- zendesk-frame.html receives an open message and calls:\n     zE('messenger', 'show');\n     zE('messenger', 'open'); -->` }
+    ],
+    css: [
+      { kind: 'launcher' as const, text: `.contact-link {\n  display: inline-flex;\n  align-items: center;\n  gap: .5rem;\n  color: #102b4e;\n  font-weight: 700;\n  text-decoration-thickness: 2px;\n}` },
+      { kind: 'design' as const, text: `\n\n/* Modal dimensions, spacing, animation and backdrop are\n   normal design decisions and can be adapted freely. */\n.chat-modal {\n  position: fixed;\n  inset: 0;\n  display: grid;\n  place-items: center;\n}` }
+    ],
+    ts: [
+      { kind: 'launcher' as const, text: `openChat(event: Event): void {\n  event.preventDefault();\n  this.chatOpen = true;\n  this.openZendeskInsideFrame();\n}` },
+      { kind: 'zendesk' as const, text: `\n\nopenZendeskInsideFrame(): void {\n  this.chatFrame.nativeElement.contentWindow?.postMessage(\n    { type: 'open-zendesk-messaging' },\n    window.location.origin\n  );\n}` }
+    ]
+  };
+
+  private readonly buttonCodeExamples = {
+    html: [
+      { kind: 'launcher' as const, text: `<button type="button" class="contact-button" (click)="openChat()">\n  <i class="bi bi-chat-dots-fill"></i>\n  Contact us\n</button>` },
+      { kind: 'design' as const, text: `\n\n<div class="chat-modal" [class.open]="chatOpen">\n  <iframe src="/zendesk-frame.html?key=YOUR_ZENDESK_KEY"\n    title="Customer support chat"></iframe>\n</div>` },
+      { kind: 'zendesk' as const, text: `\n\n<!-- The iframe owns the Zendesk-specific hide/show/open calls. -->` }
+    ],
+    css: [
+      { kind: 'launcher' as const, text: `.contact-button {\n  display: inline-flex;\n  align-items: center;\n  gap: .65rem;\n  padding: .85rem 1.25rem;\n  border: 0;\n  border-radius: 999px;\n  background: #102b4e;\n  color: white;\n  font-weight: 700;\n}` },
+      { kind: 'design' as const, text: `\n\n/* The host application owns modal layout and transitions. */\n.chat-modal {\n  opacity: 0;\n  transform: translateY(1rem) scale(.98);\n  transition: opacity .2s ease, transform .3s ease;\n}\n.chat-modal.open {\n  opacity: 1;\n  transform: translateY(0) scale(1);\n}` }
+    ],
+    ts: [
+      { kind: 'launcher' as const, text: `openChat(): void {\n  this.chatOpen = true;\n  this.openZendeskInsideFrame();\n}\n\ncloseChat(): void {\n  this.chatOpen = false;\n}` },
+      { kind: 'zendesk' as const, text: `\n\n// postMessage keeps Zendesk isolated from the host UI implementation.` }
+    ]
+  };
+
   private setWidgetKey(client: string): void {
     this.widgetKey = client === 'MarcJacobs'
       ? 'c71de9c3-3113-4643-aa00-61f4674ecb1d'
@@ -202,7 +240,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadWidget(): void {
-    if (this.displayMode === 'stick') return;
+    if (this.displayMode !== 'float') return;
     if (!this.widgetKey || document.getElementById('ze-snippet')) return;
     const script = document.createElement('script');
     script.id = 'ze-snippet';
@@ -216,6 +254,16 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     if (this.isWidgetOpen) this.sendOpenToStickyFrame();
   }
 
+  openModalWidget(event?: Event): void {
+    event?.preventDefault();
+    this.isWidgetOpen = true;
+    setTimeout(() => this.sendOpenToStickyFrame());
+  }
+
+  closeModalWidget(): void {
+    this.isWidgetOpen = false;
+  }
+
   onStickyFrameLoad(): void {
     if (this.isWidgetOpen) this.sendOpenToStickyFrame();
   }
@@ -226,8 +274,12 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-  private sandboxUrl(client: string, mode: 'float' | 'stick'): string {
+  private sandboxUrl(client: string, mode: 'float' | 'stick' | 'link' | 'button'): string {
     return `/sandbox?sandboxSession=1&client=${encodeURIComponent(client)}&mode=${mode}`;
+  }
+
+  private isDisplayMode(value: string | null): value is 'float' | 'stick' | 'link' | 'button' {
+    return value === 'float' || value === 'stick' || value === 'link' || value === 'button';
   }
 
   ngOnDestroy(): void {
