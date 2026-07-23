@@ -100,7 +100,7 @@
 
   <div *ngIf="authorized && (displayMode === 'link' || displayMode === 'button')"
     class="modal-chat-layer" [class.open]="isWidgetOpen" [attr.aria-hidden]="!isWidgetOpen">
-    <button type="button" class="modal-backdrop" (click)="closeModalWidget()" aria-label="Close chat"></button>
+    <button type="button" class="chat-modal-backdrop" (click)="closeModalWidget()" aria-label="Close chat"></button>
     <div class="modal-chat-shell">
       <button type="button" class="modal-close" (click)="closeModalWidget()" aria-label="Close chat">
         <i class="bi bi-x-lg"></i>
