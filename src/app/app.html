@@ -6,7 +6,7 @@
   </ng-container>
 
   <!-- Main Content -->
-  <div class="flex-grow-1 p-3">
+  <div class="flex-grow-1" [class.p-3]="!isCustomerOMS()">
     <router-outlet></router-outlet>
   </div>
 </div>
