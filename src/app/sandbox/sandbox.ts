@@ -256,7 +256,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
       html: [
         { kind: 'base' as const, text: `<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>Zendesk Chat</title>\n  <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n` },
         { kind: 'launcher' as const, text: `  <svg aria-hidden="true" class="icon-library">\n    <symbol fill="none" viewBox="0 0 14 14" id="icon-chat">\n      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"\n        d="M13 6.667a5.6 5.6 0 0 1-.6 2.533 5.67 5.67 0 0 1-5.067 3.133 5.6 5.6 0 0 1-2.533-.6L1 13l1.267-3.8a5.6 5.6 0 0 1-.6-2.533A5.67 5.67 0 0 1 4.8 1.6 5.6 5.6 0 0 1 7.333 1h.334A5.653 5.653 0 0 1 13 6.333z">\n      </path>\n    </symbol>\n  </svg>\n\n  <button type="button" class="mjmm-chat-launcher"\n    onclick="toggleZendeskChat()" aria-label="Toggle chat">\n    <svg viewBox="0 0 14 14" aria-hidden="true">\n      <use href="#icon-chat"></use>\n    </svg>\n    <span>CHAT</span>\n  </button>\n\n` },
-        { kind: 'zendesk' as const, text: `  <script>\n    let zendeskChatOpen = false;\n\n    function toggleZendeskChat() {\n      if (typeof window.zE !== 'function') return;\n\n      if (zendeskChatOpen) {\n        window.zE('messenger', 'close');\n      } else {\n        window.zE('messenger', 'show');\n        window.zE('messenger', 'open');\n      }\n    }\n\n    const zendeskScript = document.createElement('script');\n    zendeskScript.id = 'ze-snippet';\n    zendeskScript.src =\n      'https://static.zdassets.com/ekr/snippet.js?key=${key}';\n    zendeskScript.onload = function () {\n      window.zE('messenger', 'hide');\n      window.zE('messenger:on', 'open', function () {\n        zendeskChatOpen = true;\n      });\n      window.zE('messenger:on', 'close', function () {\n        zendeskChatOpen = false;\n      });\n    };\n    document.body.appendChild(zendeskScript);\n  </script>\n` },
+        { kind: 'zendesk' as const, text: `  <script>\n    let zendeskChatOpen = false;\n\n    function toggleZendeskChat() {\n      if (typeof window.zE !== 'function') return;\n\n      if (zendeskChatOpen) {\n        window.zE('messenger', 'close');\n      } else {\n        window.zE('messenger', 'show');\n        window.zE('messenger', 'open');\n      }\n    }\n\n    const zendeskScript = document.createElement('script');\n    zendeskScript.id = 'ze-snippet';\n    zendeskScript.src =\n      'https://static.zdassets.com/ekr/snippet.js?key=${key}';\n    zendeskScript.onload = function () {\n      window.zE('messenger:set', 'customization', {\n        theme: {\n          primary: '#f3f3f3',\n          onPrimary: '#000000',\n          background: '#ffffff',\n          onBackground: '#000000',\n          conversationListBackground: '#ffffff',\n          onConversationListBackground: '#000000'\n        }\n      });\n\n      window.zE('messenger', 'hide');\n      window.zE('messenger:on', 'open', function () {\n        zendeskChatOpen = true;\n      });\n      window.zE('messenger:on', 'close', function () {\n        zendeskChatOpen = false;\n      });\n    };\n    document.body.appendChild(zendeskScript);\n  </script>\n` },
         { kind: 'base' as const, text: `</body>\n</html>` }
       ],
       css: [
@@ -286,6 +286,16 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
       script.onload = () => {
         const zendesk = (window as any).zE;
         if (typeof zendesk !== 'function') return;
+        zendesk('messenger:set', 'customization', {
+          theme: {
+            primary: '#f3f3f3',
+            onPrimary: '#000000',
+            background: '#ffffff',
+            onBackground: '#000000',
+            conversationListBackground: '#ffffff',
+            onConversationListBackground: '#000000'
+          }
+        });
         zendesk('messenger', 'hide');
         zendesk('messenger:on', 'open', () => { this.isMjmmWidgetOpen = true; });
         zendesk('messenger:on', 'close', () => { this.isMjmmWidgetOpen = false; });
