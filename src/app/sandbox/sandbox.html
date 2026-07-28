@@ -13,7 +13,8 @@
           title="Open chat from a custom button"><i class="bi bi-square-fill"></i>Button</button>
         <button type="button" [class.active]="displayMode === 'mobile'" (click)="switchDisplayMode('mobile')"
           title="Preview a full-screen mobile chat"><i class="bi bi-phone"></i>Mobile</button>
-        <button type="button" [class.active]="displayMode === 'mjmm'" (click)="switchDisplayMode('mjmm')"
+        <button *ngIf="activeClient === 'MarcJacobs'" type="button" [class.active]="displayMode === 'mjmm'"
+          (click)="switchDisplayMode('mjmm')"
           title="Use the Marc Jacobs-style direct launcher"><i class="bi bi-chat-dots"></i>MJMM</button>
       </div>
     </div>

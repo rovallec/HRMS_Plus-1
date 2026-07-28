@@ -95,6 +95,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
         this.authorizedClients = Array.isArray(res.clients) && res.clients.length
           ? res.clients
           : [res.client];
+        this.normalizeDisplayModeForClient();
         this.sessionToken = res.sessionToken;
         sessionStorage.setItem('sandboxSessionToken', this.sessionToken);
         sessionStorage.setItem('sandboxActiveClient', this.activeClient);
@@ -117,7 +118,8 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   }
 
   switchDisplayMode(mode: 'float' | 'stick' | 'link' | 'button' | 'mobile' | 'mjmm'): void {
-    if (!this.authorized || mode === this.displayMode) return;
+    if (!this.authorized || mode === this.displayMode
+      || (mode === 'mjmm' && this.activeClient !== 'MarcJacobs')) return;
     sessionStorage.setItem('sandboxDisplayMode', mode);
     window.location.href = this.sandboxUrl(this.activeClient, mode);
   }
@@ -130,6 +132,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
         this.authorized = true;
         this.activeClient = res.client;
         this.authorizedClients = res.clients || [res.client];
+        this.normalizeDisplayModeForClient();
         this.sessionToken = sessionToken;
         sessionStorage.setItem('sandboxDisplayMode', this.displayMode);
         this.setWidgetKey(this.activeClient);
@@ -355,6 +358,13 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   private isDisplayMode(value: string | null): value is 'float' | 'stick' | 'link' | 'button' | 'mobile' | 'mjmm' {
     return value === 'float' || value === 'stick' || value === 'link' || value === 'button'
       || value === 'mobile' || value === 'mjmm';
+  }
+
+  private normalizeDisplayModeForClient(): void {
+    if (this.activeClient === 'MarcJacobs' || this.displayMode !== 'mjmm') return;
+    this.displayMode = 'float';
+    sessionStorage.setItem('sandboxDisplayMode', this.displayMode);
+    window.history.replaceState({}, '', this.sandboxUrl(this.activeClient, this.displayMode));
   }
 
   ngOnDestroy(): void {
