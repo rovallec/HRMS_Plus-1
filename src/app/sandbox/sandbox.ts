@@ -18,7 +18,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   sessionToken = '';
   activeClient = '';
   authorizedClients: string[] = [];
-  displayMode: 'float' | 'stick' | 'link' | 'button' | 'mobile' = 'float';
+  displayMode: 'float' | 'stick' | 'link' | 'button' | 'mobile' | 'mjmm' = 'float';
   isWidgetOpen = false;
   stickyFrameUrl: SafeResourceUrl | null = null;
   contentView: 'feedback' | 'code' = 'feedback';
@@ -115,7 +115,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     window.location.href = this.sandboxUrl(client, this.displayMode);
   }
 
-  switchDisplayMode(mode: 'float' | 'stick' | 'link' | 'button' | 'mobile'): void {
+  switchDisplayMode(mode: 'float' | 'stick' | 'link' | 'button' | 'mobile' | 'mjmm'): void {
     if (!this.authorized || mode === this.displayMode) return;
     sessionStorage.setItem('sandboxDisplayMode', mode);
     window.location.href = this.sandboxUrl(this.activeClient, mode);
@@ -164,7 +164,9 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
           ? this.buttonCodeExamples
           : this.displayMode === 'mobile'
             ? this.mobileCodeExamples
-            : this.floatCodeExamples;
+            : this.displayMode === 'mjmm'
+              ? this.mjmmCodeExamples
+              : this.floatCodeExamples;
     return examples[this.activeCodeTab];
   }
 
@@ -247,6 +249,20 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     ]
   };
 
+  private readonly mjmmCodeExamples = {
+    html: [
+      { kind: 'zendesk' as const, text: `<!-- Zendesk Messaging: load the normal snippet directly on the page. -->\n<script id="ze-snippet"\n  src="https://static.zdassets.com/ekr/snippet.js?key=YOUR_ZENDESK_KEY">\n</script>` },
+      { kind: 'launcher' as const, text: `\n\n<button type="button" class="mjmm-chat-launcher" (click)="openChat()">\n  <i class="bi bi-chat-dots"></i>\n  <span>CHAT</span>\n</button>` }
+    ],
+    css: [
+      { kind: 'launcher' as const, text: `.mjmm-chat-launcher {\n  position: fixed;\n  right: 16px;\n  bottom: 16px;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  width: auto;\n  padding: 12px 18px;\n  border: 1px solid #000;\n  border-radius: 0;\n  background: #fff;\n  color: #000;\n  font: 700 12px/1 Arial, sans-serif;\n  letter-spacing: .08em;\n}` }
+    ],
+    ts: [
+      { kind: 'zendesk' as const, text: `ngAfterViewInit(): void {\n  window.zE?.('messenger', 'hide');\n}\n\nopenChat(): void {\n  window.zE?.('messenger', 'show');\n  window.zE?.('messenger', 'open');\n}` },
+      { kind: 'base' as const, text: `\n\n// No iframe or custom chat container is used.\n// Zendesk renders and owns the conversation window.` }
+    ]
+  };
+
   private setWidgetKey(client: string): void {
     this.widgetKey = client === 'MarcJacobs'
       ? 'c71de9c3-3113-4643-aa00-61f4674ecb1d'
@@ -257,13 +273,26 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadWidget(): void {
-    if (this.displayMode !== 'float') return;
+    if (this.displayMode !== 'float' && this.displayMode !== 'mjmm') return;
     if (!this.widgetKey || document.getElementById('ze-snippet')) return;
     const script = document.createElement('script');
     script.id = 'ze-snippet';
     script.src = `https://static.zdassets.com/ekr/snippet.js?key=${this.widgetKey}`;
     script.async = true;
+    if (this.displayMode === 'mjmm') {
+      script.onload = () => {
+        const zendesk = (window as any).zE;
+        if (typeof zendesk === 'function') zendesk('messenger', 'hide');
+      };
+    }
     document.body.appendChild(script);
+  }
+
+  openMjmmWidget(): void {
+    const zendesk = (window as any).zE;
+    if (typeof zendesk !== 'function') return;
+    zendesk('messenger', 'show');
+    zendesk('messenger', 'open');
   }
 
   openStickyWidget(): void {
@@ -296,13 +325,13 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-  private sandboxUrl(client: string, mode: 'float' | 'stick' | 'link' | 'button' | 'mobile'): string {
+  private sandboxUrl(client: string, mode: 'float' | 'stick' | 'link' | 'button' | 'mobile' | 'mjmm'): string {
     return `/sandbox?sandboxSession=1&client=${encodeURIComponent(client)}&mode=${mode}`;
   }
 
-  private isDisplayMode(value: string | null): value is 'float' | 'stick' | 'link' | 'button' | 'mobile' {
+  private isDisplayMode(value: string | null): value is 'float' | 'stick' | 'link' | 'button' | 'mobile' | 'mjmm' {
     return value === 'float' || value === 'stick' || value === 'link' || value === 'button'
-      || value === 'mobile';
+      || value === 'mobile' || value === 'mjmm';
   }
 
   ngOnDestroy(): void {
