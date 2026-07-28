@@ -249,19 +249,21 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     ]
   };
 
-  private readonly mjmmCodeExamples = {
-    html: [
-      { kind: 'zendesk' as const, text: `<!-- Zendesk Messaging: load the normal snippet directly on the page. -->\n<script id="ze-snippet"\n  src="https://static.zdassets.com/ekr/snippet.js?key=YOUR_ZENDESK_KEY">\n</script>` },
-      { kind: 'launcher' as const, text: `\n\n<button type="button" class="mjmm-chat-launcher" (click)="openChat()">\n  <i class="bi bi-chat-dots"></i>\n  <span>CHAT</span>\n</button>` }
-    ],
-    css: [
-      { kind: 'launcher' as const, text: `.mjmm-chat-launcher {\n  position: fixed;\n  right: 16px;\n  bottom: 16px;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  width: auto;\n  padding: 12px 18px;\n  border: 1px solid #000;\n  border-radius: 0;\n  background: #fff;\n  color: #000;\n  font: 700 12px/1 Arial, sans-serif;\n  letter-spacing: .08em;\n}` }
-    ],
-    ts: [
-      { kind: 'zendesk' as const, text: `ngAfterViewInit(): void {\n  window.zE?.('messenger', 'hide');\n}\n\nopenChat(): void {\n  window.zE?.('messenger', 'show');\n  window.zE?.('messenger', 'open');\n}` },
-      { kind: 'base' as const, text: `\n\n// No iframe or custom chat container is used.\n// Zendesk renders and owns the conversation window.` }
-    ]
-  };
+  private get mjmmCodeExamples() {
+    const key = this.widgetKey || 'YOUR_ZENDESK_KEY';
+    return {
+      html: [
+        { kind: 'base' as const, text: `<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>Zendesk Chat</title>\n  <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n` },
+        { kind: 'launcher' as const, text: `  <button type="button" class="mjmm-chat-launcher"\n    onclick="openZendeskChat()" aria-label="Open chat">\n    <svg viewBox="0 0 24 24" aria-hidden="true">\n      <path d="M4 4h16v12H8l-4 4V4zm2 2v9.2L7.2 14H18V6H6z"/>\n    </svg>\n    <span>CHAT</span>\n  </button>\n\n` },
+        { kind: 'zendesk' as const, text: `  <script>\n    function openZendeskChat() {\n      if (typeof window.zE !== 'function') return;\n      window.zE('messenger', 'show');\n      window.zE('messenger', 'open');\n    }\n\n    const zendeskScript = document.createElement('script');\n    zendeskScript.id = 'ze-snippet';\n    zendeskScript.src =\n      'https://static.zdassets.com/ekr/snippet.js?key=${key}';\n    zendeskScript.onload = function () {\n      window.zE('messenger', 'hide');\n    };\n    document.body.appendChild(zendeskScript);\n  </script>\n` },
+        { kind: 'base' as const, text: `</body>\n</html>` }
+      ],
+      css: [
+        { kind: 'launcher' as const, text: `.mjmm-chat-launcher {\n  position: fixed;\n  right: 16px;\n  bottom: 16px;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  width: auto;\n  padding: 12px 18px;\n  border: 1px solid #000;\n  border-radius: 0;\n  background: #fff;\n  color: #000;\n  font: 700 12px/1 Arial, sans-serif;\n  letter-spacing: .08em;\n  cursor: pointer;\n}\n\n.mjmm-chat-launcher svg {\n  width: 16px;\n  height: 16px;\n  fill: currentColor;\n}` }
+      ],
+      ts: []
+    };
+  }
 
   private setWidgetKey(client: string): void {
     this.widgetKey = client === 'MarcJacobs'

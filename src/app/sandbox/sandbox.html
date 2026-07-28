@@ -110,7 +110,8 @@
     <div class="code-tabs" role="tablist">
       <button type="button" [class.active]="activeCodeTab === 'html'" (click)="activeCodeTab='html'">HTML</button>
       <button type="button" [class.active]="activeCodeTab === 'css'" (click)="activeCodeTab='css'">CSS</button>
-      <button type="button" [class.active]="activeCodeTab === 'ts'" (click)="activeCodeTab='ts'">.TS</button>
+      <button *ngIf="displayMode !== 'mjmm'" type="button" [class.active]="activeCodeTab === 'ts'"
+        (click)="activeCodeTab='ts'">.TS</button>
     </div>
 
     <pre class="code-view"><code><span *ngFor="let section of codeSections" [class]="'code-' + section.kind">{{ section.text }}</span></code></pre>
