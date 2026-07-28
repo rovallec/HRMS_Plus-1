@@ -259,7 +259,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
         { kind: 'base' as const, text: `</body>\n</html>` }
       ],
       css: [
-        { kind: 'launcher' as const, text: `.mjmm-chat-launcher {\n  position: fixed;\n  right: 16px;\n  bottom: 16px;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  width: auto;\n  padding: 12px 18px;\n  border: 1px solid #000;\n  border-radius: 0;\n  background: #fff;\n  color: #000;\n  font: 700 12px/1 Arial, sans-serif;\n  letter-spacing: .08em;\n  cursor: pointer;\n}\n\n.mjmm-chat-launcher svg {\n  width: 16px;\n  height: 16px;\n  fill: currentColor;\n}` }
+        { kind: 'launcher' as const, text: `.mjmm-chat-launcher {\n  position: fixed;\n  right: 16px;\n  bottom: 16px;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  width: auto;\n  padding: 12px 18px;\n  border: 1px solid #000;\n  border-radius: 0;\n  background: #fff;\n  color: #000;\n  font: 700 12px/1 Arial, sans-serif;\n  letter-spacing: .08em;\n  cursor: pointer;\n}\n\n.mjmm-chat-launcher svg {\n  width: 16px;\n  height: 16px;\n  fill: currentColor;\n}\n\n/* Hide only Zendesk's native launcher. The open chat window remains visible. */\niframe#launcher,\niframe[title="Button to launch messaging window"] {\n  display: none !important;\n}` }
       ],
       ts: []
     };

@@ -13,3 +13,8 @@ html, body {
   overflow-y: auto;
   background-color: #f4f6f9; /* Nearsol light background */
 }
+/* MJMM uses its own launcher. Zendesk's conversation iframe remains untouched. */
+body:has(.mjmm-chat-launcher) iframe#launcher,
+body:has(.mjmm-chat-launcher) iframe[title="Button to launch messaging window"] {
+  display: none !important;
+}
