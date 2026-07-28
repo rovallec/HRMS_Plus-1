@@ -11,6 +11,8 @@
           title="Open chat from a text link"><i class="bi bi-link-45deg"></i>Link</button>
         <button type="button" [class.active]="displayMode === 'button'" (click)="switchDisplayMode('button')"
           title="Open chat from a custom button"><i class="bi bi-square-fill"></i>Button</button>
+        <button type="button" [class.active]="displayMode === 'mobile'" (click)="switchDisplayMode('mobile')"
+          title="Preview a full-screen mobile chat"><i class="bi bi-phone"></i>Mobile</button>
       </div>
     </div>
     <div class="header-actions">
@@ -46,7 +48,33 @@
   </section>
 
   <section class="sandbox-card feedback-card content-panel" *ngIf="authorized && contentView === 'feedback'">
-    <div class="eyebrow">{{ activeClient === 'MarcJacobs' ? 'MARC JACOBS' : 'COLE HAAN' }} SANDBOX</div>
+    <div class="eyebrow">{{ activeClient === 'MarcJacobs' ? 'MARC JACOBS' : 'COLE HAAN' }} {{ displayMode === 'mobile' ? 'MOBILE DEMO' : 'SANDBOX' }}</div>
+    <h1 *ngIf="displayMode === 'mobile'">Demo</h1>
+    <div *ngIf="displayMode === 'mobile'" class="mobile-demo">
+      <div class="phone-frame" [class.chat-open]="isWidgetOpen">
+        <div class="phone-speaker" aria-hidden="true"></div>
+        <div class="phone-screen">
+          <div *ngIf="!isWidgetOpen" class="mobile-site">
+            <div class="mobile-site-nav"><span class="mobile-brand">cxperts</span><i class="bi bi-list"></i></div>
+            <div class="mobile-hero">
+              <span class="stage-label">MOBILE EXPERIENCE</span>
+              <h2>Support wherever your customers are.</h2>
+              <p>This area represents your mobile site. Its design and content remain entirely yours.</p>
+              <div class="mobile-content-line"></div>
+              <div class="mobile-content-line short"></div>
+            </div>
+          </div>
+          <iframe *ngIf="isWidgetOpen" #zendeskFrame class="mobile-chat-frame" [src]="stickyFrameUrl"
+            (load)="onStickyFrameLoad()" title="Full-screen mobile support chat"></iframe>
+          <button *ngIf="!isWidgetOpen" type="button" class="mobile-launcher" (click)="openMobileWidget()"
+            aria-label="Open full-screen mobile chat"><i class="bi bi-chat-dots-fill"></i></button>
+          <button *ngIf="isWidgetOpen" type="button" class="mobile-close" (click)="closeModalWidget()"
+            aria-label="Return to mobile demo"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="phone-home" aria-hidden="true"></div>
+      </div>
+      <p class="mobile-demo-caption">The launcher stays attached to the phone edge. Tap it to make chat the entire mobile experience.</p>
+    </div>
     <div class="custom-launcher-stage" *ngIf="displayMode === 'link' || displayMode === 'button'">
       <span class="stage-label">CUSTOM CONTACT ENTRY</span>
       <a *ngIf="displayMode === 'link'" href="#contact" class="contact-demo-link"
@@ -54,7 +82,7 @@
       <button *ngIf="displayMode === 'button'" type="button" class="contact-demo-button"
         (click)="openModalWidget()"><i class="bi bi-chat-dots-fill"></i>Contact us</button>
     </div>
-    <h1>How did the AI do?</h1>
+    <h1 *ngIf="displayMode !== 'mobile'">How did the AI do?</h1>
     <p class="intro">Open the chat bubble to test the experience, then leave your feedback below.</p>
     <textarea [(ngModel)]="feedback" maxlength="5000" rows="7" [disabled]="feedbackSaved" placeholder="Share observations, issues or suggestions…"></textarea>
     <div class="error" *ngIf="error">{{ error }}</div>

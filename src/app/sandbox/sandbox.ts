@@ -18,7 +18,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   sessionToken = '';
   activeClient = '';
   authorizedClients: string[] = [];
-  displayMode: 'float' | 'stick' | 'link' | 'button' = 'float';
+  displayMode: 'float' | 'stick' | 'link' | 'button' | 'mobile' = 'float';
   isWidgetOpen = false;
   stickyFrameUrl: SafeResourceUrl | null = null;
   contentView: 'feedback' | 'code' = 'feedback';
@@ -115,7 +115,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     window.location.href = this.sandboxUrl(client, this.displayMode);
   }
 
-  switchDisplayMode(mode: 'float' | 'stick' | 'link' | 'button'): void {
+  switchDisplayMode(mode: 'float' | 'stick' | 'link' | 'button' | 'mobile'): void {
     if (!this.authorized || mode === this.displayMode) return;
     sessionStorage.setItem('sandboxDisplayMode', mode);
     window.location.href = this.sandboxUrl(this.activeClient, mode);
@@ -162,7 +162,9 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
         ? this.linkCodeExamples
         : this.displayMode === 'button'
           ? this.buttonCodeExamples
-          : this.floatCodeExamples;
+          : this.displayMode === 'mobile'
+            ? this.mobileCodeExamples
+            : this.floatCodeExamples;
     return examples[this.activeCodeTab];
   }
 
@@ -230,6 +232,21 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     ]
   };
 
+  private readonly mobileCodeExamples = {
+    html: [
+      { kind: 'design' as const, text: `<main class="mobile-app" [class.chat-open]="chatOpen">\n  <section class="app-content">\n    <!-- Your existing mobile site or application. -->\n  </section>\n\n  <iframe *ngIf="chatOpen"\n    #chatFrame\n    class="mobile-chat"\n    src="/zendesk-frame.html?key=YOUR_ZENDESK_KEY"\n    title="Customer support chat"></iframe>\n\n  <button *ngIf="!chatOpen" class="mobile-chat-launcher"\n    (click)="openMobileChat()" aria-label="Open support chat">\n    <i class="bi bi-chat-dots-fill"></i>\n  </button>\n\n  <button *ngIf="chatOpen" class="mobile-chat-close"\n    (click)="closeMobileChat()" aria-label="Return to the app">×</button>\n</main>` },
+      { kind: 'zendesk' as const, text: `\n\n<!-- zendesk-frame.html owns the Zendesk snippet and opens Messaging\n     when it receives the cx-sandbox-open-zendesk message. -->` }
+    ],
+    css: [
+      { kind: 'design' as const, text: `.mobile-app {\n  position: relative;\n  width: 100%;\n  height: 100dvh;\n  overflow: hidden;\n  background: #fff;\n}\n\n.mobile-chat {\n  position: absolute;\n  inset: 0;\n  width: 100%;\n  height: 100%;\n  border: 0;\n  background: #fff;\n}` },
+      { kind: 'launcher' as const, text: `\n\n.mobile-chat-launcher {\n  position: absolute;\n  right: 0;\n  top: 50%;\n  transform: translateY(-50%);\n  border-radius: 16px 0 0 16px;\n}\n\n.mobile-chat-close {\n  position: absolute;\n  z-index: 2;\n  top: max(12px, env(safe-area-inset-top));\n  right: 12px;\n}` }
+    ],
+    ts: [
+      { kind: 'launcher' as const, text: `chatOpen = false;\n\nopenMobileChat(): void {\n  this.chatOpen = true;\n  setTimeout(() => this.chatFrame.nativeElement.contentWindow?.postMessage(\n    { type: 'cx-sandbox-open-zendesk' },\n    window.location.origin\n  ));\n}\n\ncloseMobileChat(): void {\n  this.chatOpen = false;\n}` },
+      { kind: 'design' as const, text: `\n\n// Because the iframe fills the mobile viewport, chat becomes the page\n// experience rather than an overlay or floating add-on.` }
+    ]
+  };
+
   private setWidgetKey(client: string): void {
     this.widgetKey = client === 'MarcJacobs'
       ? 'c71de9c3-3113-4643-aa00-61f4674ecb1d'
@@ -260,6 +277,11 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => this.sendOpenToStickyFrame());
   }
 
+  openMobileWidget(): void {
+    this.isWidgetOpen = true;
+    setTimeout(() => this.sendOpenToStickyFrame());
+  }
+
   closeModalWidget(): void {
     this.isWidgetOpen = false;
   }
@@ -274,12 +296,13 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-  private sandboxUrl(client: string, mode: 'float' | 'stick' | 'link' | 'button'): string {
+  private sandboxUrl(client: string, mode: 'float' | 'stick' | 'link' | 'button' | 'mobile'): string {
     return `/sandbox?sandboxSession=1&client=${encodeURIComponent(client)}&mode=${mode}`;
   }
 
-  private isDisplayMode(value: string | null): value is 'float' | 'stick' | 'link' | 'button' {
-    return value === 'float' || value === 'stick' || value === 'link' || value === 'button';
+  private isDisplayMode(value: string | null): value is 'float' | 'stick' | 'link' | 'button' | 'mobile' {
+    return value === 'float' || value === 'stick' || value === 'link' || value === 'button'
+      || value === 'mobile';
   }
 
   ngOnDestroy(): void {
