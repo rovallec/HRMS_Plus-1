@@ -20,6 +20,7 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   authorizedClients: string[] = [];
   displayMode: 'float' | 'stick' | 'link' | 'button' | 'mobile' | 'mjmm' = 'float';
   isWidgetOpen = false;
+  isMjmmWidgetOpen = false;
   stickyFrameUrl: SafeResourceUrl | null = null;
   contentView: 'feedback' | 'code' = 'feedback';
   activeCodeTab: 'html' | 'css' | 'ts' = 'html';
@@ -254,12 +255,12 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     return {
       html: [
         { kind: 'base' as const, text: `<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>Zendesk Chat</title>\n  <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n` },
-        { kind: 'launcher' as const, text: `  <button type="button" class="mjmm-chat-launcher"\n    onclick="openZendeskChat()" aria-label="Open chat">\n    <svg viewBox="0 0 24 24" aria-hidden="true">\n      <path d="M4 4h16v12H8l-4 4V4zm2 2v9.2L7.2 14H18V6H6z"/>\n    </svg>\n    <span>CHAT</span>\n  </button>\n\n` },
-        { kind: 'zendesk' as const, text: `  <script>\n    function openZendeskChat() {\n      if (typeof window.zE !== 'function') return;\n      window.zE('messenger', 'show');\n      window.zE('messenger', 'open');\n    }\n\n    const zendeskScript = document.createElement('script');\n    zendeskScript.id = 'ze-snippet';\n    zendeskScript.src =\n      'https://static.zdassets.com/ekr/snippet.js?key=${key}';\n    zendeskScript.onload = function () {\n      window.zE('messenger', 'hide');\n    };\n    document.body.appendChild(zendeskScript);\n  </script>\n` },
+        { kind: 'launcher' as const, text: `  <svg aria-hidden="true" class="icon-library">\n    <symbol fill="none" viewBox="0 0 14 14" id="icon-chat">\n      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"\n        d="M13 6.667a5.6 5.6 0 0 1-.6 2.533 5.67 5.67 0 0 1-5.067 3.133 5.6 5.6 0 0 1-2.533-.6L1 13l1.267-3.8a5.6 5.6 0 0 1-.6-2.533A5.67 5.67 0 0 1 4.8 1.6 5.6 5.6 0 0 1 7.333 1h.334A5.653 5.653 0 0 1 13 6.333z">\n      </path>\n    </symbol>\n  </svg>\n\n  <button type="button" class="mjmm-chat-launcher"\n    onclick="toggleZendeskChat()" aria-label="Toggle chat">\n    <svg viewBox="0 0 14 14" aria-hidden="true">\n      <use href="#icon-chat"></use>\n    </svg>\n    <span>CHAT</span>\n  </button>\n\n` },
+        { kind: 'zendesk' as const, text: `  <script>\n    let zendeskChatOpen = false;\n\n    function toggleZendeskChat() {\n      if (typeof window.zE !== 'function') return;\n\n      if (zendeskChatOpen) {\n        window.zE('messenger', 'close');\n      } else {\n        window.zE('messenger', 'show');\n        window.zE('messenger', 'open');\n      }\n    }\n\n    const zendeskScript = document.createElement('script');\n    zendeskScript.id = 'ze-snippet';\n    zendeskScript.src =\n      'https://static.zdassets.com/ekr/snippet.js?key=${key}';\n    zendeskScript.onload = function () {\n      window.zE('messenger', 'hide');\n      window.zE('messenger:on', 'open', function () {\n        zendeskChatOpen = true;\n      });\n      window.zE('messenger:on', 'close', function () {\n        zendeskChatOpen = false;\n      });\n    };\n    document.body.appendChild(zendeskScript);\n  </script>\n` },
         { kind: 'base' as const, text: `</body>\n</html>` }
       ],
       css: [
-        { kind: 'launcher' as const, text: `.mjmm-chat-launcher {\n  position: fixed;\n  right: 16px;\n  bottom: 16px;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  width: auto;\n  padding: 12px 18px;\n  border: 1px solid #000;\n  border-radius: 0;\n  background: #fff;\n  color: #000;\n  font: 700 12px/1 Arial, sans-serif;\n  letter-spacing: .08em;\n  cursor: pointer;\n}\n\n.mjmm-chat-launcher svg {\n  width: 16px;\n  height: 16px;\n  fill: currentColor;\n}\n\n/* Hide only Zendesk's native launcher. The open chat window remains visible. */\niframe#launcher,\niframe[title="Button to launch messaging window"] {\n  display: none !important;\n}` }
+        { kind: 'launcher' as const, text: `.icon-library {\n  display: none;\n}\n\n.mjmm-chat-launcher {\n  position: fixed;\n  right: 16px;\n  bottom: 16px;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  width: auto;\n  padding: 12px 20.5px;\n  border: 1px solid #000;\n  border-radius: 0;\n  background: #000;\n  color: #fff;\n  font: 700 12px/1 Arial, sans-serif;\n  letter-spacing: .08em;\n  cursor: pointer;\n}\n\n.mjmm-chat-launcher:hover {\n  border-color: #ffe900;\n  background: #ffe900;\n  color: #000;\n}\n\n.mjmm-chat-launcher svg {\n  width: 14px;\n  height: 14px;\n  fill: none;\n}\n\n/* Hide only Zendesk's native launcher. The open chat window remains visible. */\niframe#launcher,\niframe[title="Button to launch messaging window"] {\n  display: none !important;\n}` }
       ],
       ts: []
     };
@@ -284,7 +285,10 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
     if (this.displayMode === 'mjmm') {
       script.onload = () => {
         const zendesk = (window as any).zE;
-        if (typeof zendesk === 'function') zendesk('messenger', 'hide');
+        if (typeof zendesk !== 'function') return;
+        zendesk('messenger', 'hide');
+        zendesk('messenger:on', 'open', () => { this.isMjmmWidgetOpen = true; });
+        zendesk('messenger:on', 'close', () => { this.isMjmmWidgetOpen = false; });
       };
     }
     document.body.appendChild(script);
@@ -293,6 +297,10 @@ export class Sandbox implements OnInit, AfterViewInit, OnDestroy {
   openMjmmWidget(): void {
     const zendesk = (window as any).zE;
     if (typeof zendesk !== 'function') return;
+    if (this.isMjmmWidgetOpen) {
+      zendesk('messenger', 'close');
+      return;
+    }
     zendesk('messenger', 'show');
     zendesk('messenger', 'open');
   }

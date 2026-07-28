@@ -142,8 +142,12 @@
   </div>
 
   <button *ngIf="authorized && displayMode === 'mjmm'" type="button" class="mjmm-chat-launcher"
-    (click)="openMjmmWidget()" aria-label="Open Zendesk chat">
-    <i class="bi bi-chat-dots" aria-hidden="true"></i>
+    (click)="openMjmmWidget()" [attr.aria-label]="isMjmmWidgetOpen ? 'Close Zendesk chat' : 'Open Zendesk chat'">
+    <svg viewBox="0 0 14 14" aria-hidden="true">
+      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+        d="M13 6.667a5.6 5.6 0 0 1-.6 2.533 5.67 5.67 0 0 1-5.067 3.133 5.6 5.6 0 0 1-2.533-.6L1 13l1.267-3.8a5.6 5.6 0 0 1-.6-2.533A5.67 5.67 0 0 1 4.8 1.6 5.6 5.6 0 0 1 7.333 1h.334A5.653 5.653 0 0 1 13 6.333z">
+      </path>
+    </svg>
     <span>CHAT</span>
   </button>
 </main>
