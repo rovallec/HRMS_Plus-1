@@ -66,7 +66,7 @@ function sendSandboxEmail(string $recipient, string $accessUrl): void {
         . '<div style="max-width:600px;margin:auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 8px 28px rgba(16,35,64,.12)">'
         . '<div style="padding:26px 32px;background:#102b4e;color:#fff;font-size:25px;font-weight:700;letter-spacing:1px">cxperts</div>'
         . '<div style="padding:34px 32px"><h2 style="margin-top:0">Your AI Sandbox access</h2>'
-        . '<p>Use the button below to open your chatbot testing environment. This link can only be used once.</p>'
+        . '<p>Use the button below to open your chatbot testing environment. This link remains valid for 10 minutes and may be opened more than once during that window.</p>'
         . '<p style="margin:30px 0"><a href="'.$safeUrl.'" style="display:inline-block;background:#ff7657;color:#fff;text-decoration:none;padding:13px 24px;border-radius:7px;font-weight:700">Open AI Sandbox</a></p>'
         . '<p style="font-size:12px;color:#667085">If you did not request this access, you can ignore this email.</p></div></div></div>';
 
@@ -118,8 +118,8 @@ try {
         $rawToken = bin2hex(random_bytes(32));
         $tokenHash = hash('sha256', $rawToken);
         $pdo->beginTransaction();
-        $pdo->prepare('UPDATE sandboxTokens SET status=0 WHERE requested=:email AND client=:client AND status=1')->execute(['email' => $email, 'client' => $client]);
-        $insert = $pdo->prepare('INSERT INTO sandboxTokens (client, token, status, requested) VALUES (:client, :token, 1, :email)');
+        $pdo->prepare("UPDATE sandboxTokens SET status=0 WHERE requested=:email AND client=:client AND status=1 AND tokenPurpose='access'")->execute(['email' => $email, 'client' => $client]);
+        $insert = $pdo->prepare("INSERT INTO sandboxTokens (client, token, status, requested, tokenPurpose, expiresAt) VALUES (:client, :token, 1, :email, 'access', DATE_ADD(UTC_TIMESTAMP(), INTERVAL 10 MINUTE))");
         $insert->execute(['client' => $client, 'token' => $tokenHash, 'email' => $email]);
         $tokenId = (int)$pdo->lastInsertId();
         $pdo->commit();
@@ -139,13 +139,13 @@ try {
 
     if ($action === 'access') {
         $rawToken = trim($body['token'] ?? '');
-        if (!preg_match('/^[a-f0-9]{64}$/', $rawToken)) { sandboxRespond(['success' => false, 'error' => 'Invalid or already used access link.'], 403); }
+        if (!preg_match('/^[a-f0-9]{64}$/', $rawToken)) { sandboxRespond(['success' => false, 'error' => 'Invalid or expired access link.'], 403); }
         $tokenHash = hash('sha256', $rawToken);
         $pdo->beginTransaction();
-        $stmt = $pdo->prepare('SELECT idsandboxTokens, client FROM sandboxTokens WHERE token=:token AND status=1 FOR UPDATE');
+        $stmt = $pdo->prepare("SELECT idsandboxTokens, client FROM sandboxTokens WHERE token=:token AND status=1 AND tokenPurpose='access' AND expiresAt > UTC_TIMESTAMP() FOR UPDATE");
         $stmt->execute(['token' => $tokenHash]);
         $row = $stmt->fetch();
-        if (!$row) { $pdo->rollBack(); sandboxRespond(['success' => false, 'error' => 'Invalid or already used access link.'], 403); }
+        if (!$row) { $pdo->rollBack(); sandboxRespond(['success' => false, 'error' => 'Invalid or expired access link.'], 403); }
         $clients = parseSandboxClients((string)$row['client']);
         if (count($clients) === 0) {
             $pdo->rollBack();
@@ -153,7 +153,8 @@ try {
         }
         $sessionToken = bin2hex(random_bytes(32));
         $sessionHash = hash('sha256', $sessionToken);
-        $pdo->prepare('UPDATE sandboxTokens SET status=0, token=:sessionHash WHERE idsandboxTokens=:id')->execute(['sessionHash' => $sessionHash, 'id' => $row['idsandboxTokens']]);
+        $insertSession = $pdo->prepare("INSERT INTO sandboxTokens (client, token, status, requested, tokenPurpose, expiresAt) VALUES (:client, :token, 0, NULL, 'session', NULL)");
+        $insertSession->execute(['client' => (string)$row['client'], 'token' => $sessionHash]);
         $pdo->commit();
         sandboxRespond(['success' => true, 'client' => $clients[0], 'clients' => $clients, 'sessionToken' => $sessionToken]);
     }
@@ -164,7 +165,7 @@ try {
         if (!preg_match('/^[a-f0-9]{64}$/', $sessionToken) || $feedback === '' || mb_strlen($feedback) > 5000) {
             sandboxRespond(['success' => false, 'error' => 'Invalid feedback.'], 400);
         }
-        $stmt = $pdo->prepare('UPDATE sandboxTokens SET feedback=:feedback WHERE token=:token AND status=0');
+        $stmt = $pdo->prepare("UPDATE sandboxTokens SET feedback=:feedback WHERE token=:token AND status=0 AND tokenPurpose='session'");
         $stmt->execute(['feedback' => $feedback, 'token' => hash('sha256', $sessionToken)]);
         if ($stmt->rowCount() !== 1) { sandboxRespond(['success' => false, 'error' => 'Your sandbox session is no longer valid.'], 403); }
         sandboxRespond(['success' => true]);
@@ -176,7 +177,7 @@ try {
         if (!preg_match('/^[a-f0-9]{64}$/', $sessionToken) || !$requestedClient) {
             sandboxRespond(['success' => false, 'error' => 'Your sandbox session is invalid.'], 403);
         }
-        $stmt = $pdo->prepare('SELECT client FROM sandboxTokens WHERE token=:token AND status=0 LIMIT 1');
+        $stmt = $pdo->prepare("SELECT client FROM sandboxTokens WHERE token=:token AND status=0 AND tokenPurpose='session' LIMIT 1");
         $stmt->execute(['token' => hash('sha256', $sessionToken)]);
         $storedClients = $stmt->fetchColumn();
         $clients = $storedClients !== false ? parseSandboxClients((string)$storedClients) : [];
