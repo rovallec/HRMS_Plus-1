@@ -282,8 +282,12 @@
 
                         <div class="team-card" (click)="openCustomer(c)">
 
-                            <div class="team-name">{{ c.first_name }} {{c.last_name}}</div>
-                            <div class="team-code">{{ c.email }}</div>
+                            <div class="team-name" *ngIf="c.first_name || c.last_name">
+                                {{ c.first_name }} {{ c.last_name }}
+                            </div>
+                            <div class="team-code" *ngIf="c.email">{{ c.email }}</div>
+                            <div class="team-code" *ngIf="c.phone">{{ c.phone }}</div>
+                            <div class="team-title-small">Created At: {{ c.created_at }}</div>
                         </div>
 
                     </div>
@@ -317,7 +321,10 @@
                 </button>
 
                 <h5 class="mb-3">
-                    {{ selectedCustomer.name }}
+                    {{ selectedCustomer.first_name }} {{ selectedCustomer.last_name }}
+                    <span *ngIf="!selectedCustomer.first_name && !selectedCustomer.last_name">
+                        {{ selectedCustomer.phone || selectedCustomer.email || ('Customer #' + selectedCustomer.id) }}
+                    </span>
                 </h5>
 
                 <div class="row g-3">

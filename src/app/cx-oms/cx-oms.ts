@@ -127,25 +127,12 @@ export class CxOms implements OnInit {
 
   search() {
 
-    const term =
-      this.searchTerm.toLowerCase();
+    const term = this.searchTerm.trim().toLowerCase();
 
     this.filteredCustomers =
       this.customers.filter(c =>
-
-        c.name.toLowerCase().includes(term)
-        ||
-        c.email.toLowerCase().includes(term)
-        ||
-        c.phone.toLowerCase().includes(term)
-        ||
-        c.orders.some((o: any) =>
-
-          o.orderNumber
-            .toLowerCase()
-            .includes(term)
-
-        )
+        [c.first_name, c.last_name, c.email, c.phone, c.created_at]
+          .some(value => String(value ?? '').toLowerCase().includes(term))
 
       );
 

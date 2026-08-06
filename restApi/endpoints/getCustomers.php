@@ -16,6 +16,7 @@ try {
             email,
             first_name,
             last_name,
+            phone,
             created_at
         FROM customer
         WHERE deleted_at IS NULL

@@ -15,6 +15,33 @@ function respond(array $body, int $status = 200): void {
     exit;
 }
 
+function syncVerifiedCustomer(PDO $conn, int $orderId, string $verifiedEmail, array $payload): void {
+    $customer = $payload['order']['customer'] ?? [];
+    $shipping = $payload['order']['shippingAddress'] ?? [];
+
+    $firstName = trim((string)($customer['firstName'] ?? ''));
+    $lastName = trim((string)($customer['lastName'] ?? ''));
+    $phone = trim((string)($customer['phone'] ?? $shipping['phone'] ?? ''));
+
+    $stmt = $conn->prepare('
+        UPDATE c
+        SET c.email = :email,
+            c.first_name = COALESCE(NULLIF(:first_name, \'\'), c.first_name),
+            c.last_name = COALESCE(NULLIF(:last_name, \'\'), c.last_name),
+            c.phone = COALESCE(NULLIF(:phone, \'\'), c.phone)
+        FROM customer c
+        INNER JOIN [order] o ON o.id_customer = c.id
+        WHERE o.id = :id_order
+    ');
+    $stmt->execute([
+        'email' => $verifiedEmail,
+        'first_name' => $firstName,
+        'last_name' => $lastName,
+        'phone' => $phone,
+        'id_order' => $orderId
+    ]);
+}
+
 try {
     $input = json_decode(file_get_contents('php://input'), true) ?: [];
     $uid = trim($input['token'] ?? '');
@@ -64,8 +91,14 @@ try {
         $tracking['order_number_changed'] = 1;
     }
     if (!empty($tracking['payload'])) {
-        $conn->rollBack();
-        respond(['success' => true, 'payload' => json_decode($tracking['payload'], true), 'attemptsRemaining' => max(0, 2 - (int)$tracking['lookup_attempts'])]);
+        $payload = json_decode($tracking['payload'], true);
+        if (!is_array($payload)) {
+            $conn->rollBack();
+            throw new RuntimeException('The stored order payload is invalid.');
+        }
+        syncVerifiedCustomer($conn, (int)$tracking['id_order'], $email, $payload);
+        $conn->commit();
+        respond(['success' => true, 'payload' => $payload, 'attemptsRemaining' => max(0, 2 - (int)$tracking['lookup_attempts'])]);
     }
 
     $attempts = (int)$tracking['lookup_attempts'];
@@ -120,6 +153,8 @@ try {
         $conn->rollBack();
         throw new RuntimeException('Could not persist the Cole Haan payload.');
     }
+
+    syncVerifiedCustomer($conn, (int)$tracking['id_order'], $email, $payload);
 
     $conn->commit();
     respond(['success' => true, 'payload' => $payload, 'attemptsRemaining' => $remaining]);
