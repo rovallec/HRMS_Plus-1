@@ -285,8 +285,7 @@ lookupCustomerTracking(token: string, sessionToken: string, email: string, order
 }
 
 lookupId(payload: {
-  name: string,
-  type: 'building' | 'tenant'
+  name: string
 }) {
 
   return new Observable(observer => {
@@ -297,7 +296,6 @@ lookupId(payload: {
 
         const body = {
           name: payload.name,
-          type: payload.type,
           timestamp: Date.now()
         };
 

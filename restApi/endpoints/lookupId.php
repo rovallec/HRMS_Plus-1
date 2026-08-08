@@ -102,7 +102,6 @@ if (!is_array($input)) {
 
 
 $name = trim($input['name'] ?? '');
-$type = trim($input['type'] ?? '');
 $timestamp = $input['timestamp'] ?? null;
 
 
@@ -116,19 +115,6 @@ if ($name === '') {
     echo json_encode([
         "success" => false,
         "error" => "Search item required"
-    ]);
-
-    exit;
-}
-
-
-if (!in_array($type, ['building', 'tenant'], true)) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "error" => "Invalid type"
     ]);
 
     exit;
@@ -176,9 +162,18 @@ $clientSignature =
 
 
 // Must match Angular generateSignature(body)
+//
+// body:
+// {
+//     name,
+//     timestamp
+// }
+//
+// canonical:
+// name=...&timestamp=...
+//
 $canonicalString =
     'name=' . $name .
-    '&type=' . $type .
     '&timestamp=' . $timestamp;
 
 
@@ -222,7 +217,10 @@ if (!hash_equals($expectedSignature, $clientSignature)) {
 // ANTI REPLAY
 // =====================
 $maxSkew = 300000; // 5 minutes
-$diff = abs((time() * 1000) - (int)$timestamp);
+
+$diff = abs(
+    (time() * 1000) - (int)$timestamp
+);
 
 
 if ($diff > $maxSkew) {
@@ -273,23 +271,44 @@ try {
 
     $searchValue = '%' . $name . '%';
 
+    $row = null;
+    $type = null;
 
-    if ($type === 'building') {
 
-        $stmt = $conn->prepare("
-            SELECT TOP 1 id
-            FROM buildings
-            WHERE name LIKE :name
-            ORDER BY
-                CASE
-                    WHEN name = :exactName THEN 0
-                    ELSE 1
-                END,
-                name
-        ");
+    // =====================
+    // SEARCH BUILDING FIRST
+    // =====================
+    $stmt = $conn->prepare("
+        SELECT TOP 1 id
+        FROM buildings
+        WHERE name LIKE :name
+        ORDER BY
+            CASE
+                WHEN name = :exactName THEN 0
+                ELSE 1
+            END,
+            name
+    ");
+
+
+    $stmt->execute([
+        'name' => $searchValue,
+        'exactName' => $name
+    ]);
+
+
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+
+    if ($row) {
+
+        $type = 'building';
 
     } else {
 
+        // =====================
+        // SEARCH TENANT
+        // =====================
         $stmt = $conn->prepare("
             SELECT TOP 1 id
             FROM tenants
@@ -302,16 +321,21 @@ try {
                 dba
         ");
 
+
+        $stmt->execute([
+            'name' => $searchValue,
+            'exactName' => $name
+        ]);
+
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+
+        if ($row) {
+            $type = 'tenant';
+        }
+
     }
-
-
-    $stmt->execute([
-        'name' => $searchValue,
-        'exactName' => $name
-    ]);
-
-
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 } catch (Exception $e) {
 

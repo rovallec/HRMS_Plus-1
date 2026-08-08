@@ -82,41 +82,53 @@ loadData(): void {
 }
 
   // ================= IDSearch =================
-idSearch(type: 'building' | 'tenant') {
+idSearch() {
+
+  const name = this.searchBuildingAndTenant?.trim();
+
+  if (!name) {
+    this.buildingId = '';
+    this.tenantId = '';
+    this.loadData();
+    return;
+  }
 
   this.api.lookupId({
-    name: this.searchBuildingAndTenant,
-    type: type
+    name: name
   }).subscribe({
 
     next: (res: any) => {
 
       const data = res?.data?.res ?? null;
 
+      // Clear previous search values
+      this.buildingId = '';
+      this.tenantId = '';
+
       if (data) {
 
         if (data.type === 'building') {
+
           this.buildingId = data.id;
-          this.tenantId = '';
 
         } else if (data.type === 'tenant') {
+
           this.tenantId = data.id;
-          this.buildingId = '';
+
         }
 
-      } else {
-        this.buildingId = '';
-        this.tenantId = '';
       }
 
       this.loadData();
     },
 
     error: (err) => {
+
       console.error('Lookup ID error:', err);
 
       this.buildingId = '';
       this.tenantId = '';
+
     }
 
   });
