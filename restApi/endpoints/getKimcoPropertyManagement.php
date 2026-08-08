@@ -194,6 +194,25 @@ $building = [
 // =====================
 // TENANT
 // =====================
+
+$tenantInternalId = null;
+
+try {
+
+    $stmt = $conn->prepare("
+        SELECT TOP 1 id, name
+        FROM tenants
+        WHERE zendesk_id = :id
+    ");
+
+    $stmt->execute(["id" => $tenantId]);
+    $buildingRow = $stmt->fetch(PDO::FETCH_ASSOC);
+    $tenantInternalId = $buildingRow ? $buildingRow["id"] : null;
+
+} catch (Exception $e) {
+    $buildingRow["id"] : null;
+}
+
 $tenant = null;
 
 if ($tenantId) {
@@ -229,10 +248,10 @@ $lease_personnel = safeFetchAll($conn, "
         SELECT lp.name, lp.role, lp.email, lp.phone,
         ROW_NUMBER() OVER (PARTITION BY lp.role ORDER BY lp.name) rn
         FROM lease_personnel lp
-        WHERE lp.building_id = :id
+        WHERE lp.tenant_id = :id
     )
     SELECT name, role, email, phone FROM ranked WHERE rn = 1
-", ["id" => $internalBuildingId]);
+", ["id" => $internalTenantId]);
 
 $vendors = safeFetchAll($conn, "
     SELECT *
