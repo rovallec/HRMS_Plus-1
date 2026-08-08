@@ -13,6 +13,10 @@ import { FormsModule } from '@angular/forms';
 })
 export class KimcoPropertyManagement implements OnInit {
 
+searchBuildingAndTenant: string = '';
+
+// ================= MODAL STATE =================
+
   data: any = null;
 
   buildingId: string = '';
@@ -55,7 +59,6 @@ export class KimcoPropertyManagement implements OnInit {
 
   // ================= LOAD DATA (FIXED - OBSERVABLE SAFE) =================
 loadData(): void {
-
   this.loading = true;
 
   this.api.getKimcoPropertyManagement({
@@ -72,6 +75,48 @@ loadData(): void {
     error: (err: any) => {
       console.error('Property Management error', err);
       this.loading = false;
+    }
+
+  });
+
+}
+
+  // ================= IDSearch =================
+idSearch(type: 'building' | 'tenant') {
+
+  this.api.lookupId({
+    name: this.searchBuildingAndTenant,
+    type: type
+  }).subscribe({
+
+    next: (res: any) => {
+
+      const data = res?.data?.res ?? null;
+
+      if (data) {
+
+        if (data.type === 'building') {
+          this.buildingId = data.id;
+          this.tenantId = '';
+
+        } else if (data.type === 'tenant') {
+          this.tenantId = data.id;
+          this.buildingId = '';
+        }
+
+      } else {
+        this.buildingId = '';
+        this.tenantId = '';
+      }
+
+      this.loadData();
+    },
+
+    error: (err) => {
+      console.error('Lookup ID error:', err);
+
+      this.buildingId = '';
+      this.tenantId = '';
     }
 
   });

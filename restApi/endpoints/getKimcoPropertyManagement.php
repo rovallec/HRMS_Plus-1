@@ -160,7 +160,6 @@ try {
 
     $stmt->execute(["id" => $buildingId]);
     $buildingRow = $stmt->fetch(PDO::FETCH_ASSOC);
-
 } catch (Exception $e) {
     $buildingRow = null;
 }
@@ -195,37 +194,24 @@ $building = [
 // TENANT
 // =====================
 
-$tenantInternalId = null;
-
-try {
-
-    $stmt = $conn->prepare("
-        SELECT TOP 1 id, name
-        FROM tenants
-        WHERE zendesk_id = :id
-    ");
-
-    $stmt->execute(["id" => $tenantId]);
-    $buildingRow = $stmt->fetch(PDO::FETCH_ASSOC);
-    $tenantInternalId = $buildingRow ? $buildingRow["id"] : null;
-
-} catch (Exception $e) {
-    $buildingRow["id"] : null;
-}
+$internalTenantId = null;
 
 $tenant = null;
 
 if ($tenantId) {
 
     $stmt = $conn->prepare("
-        SELECT dba, unit_id, business_type1, business_type2, gla, lease_end_date
+        SELECT id, dba, unit_id, business_type1, business_type2, gla, lease_end_date
         FROM tenants
         WHERE zendesk_id = :id
     ");
 
     $stmt->execute(["id" => $tenantId]);
     $tenant = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    $internalTenantId = $tenant["id"];
 }
+
+
 
 // =====================
 // HELPERS

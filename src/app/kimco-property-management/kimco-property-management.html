@@ -4,6 +4,20 @@
   <h3 class="agent-title">Property Management</h3>
   <div class="agent-underline"></div>
 
+    <div class="search-container">
+
+    <input class="search-input" type="text" [(ngModel)]="searchBuildingAndTenant" (keyup.enter)="runSearch()"
+      placeholder="Search property information..." />
+
+    <button class="search-btn" (click)="runSearch()">
+
+      <i class="bi bi-search"></i>
+      Search
+
+    </button>
+
+  </div>
+
   <!-- HEADER -->
   <div class="header-row">
 

@@ -283,6 +283,53 @@ lookupCustomerTracking(token: string, sessionToken: string, email: string, order
     { token, sessionToken, email, orderNumber }
   );
 }
+
+lookupId(payload: {
+  name: string,
+  type: 'building' | 'tenant'
+}) {
+
+  return new Observable(observer => {
+
+    (async () => {
+
+      try {
+
+        const body = {
+          name: payload.name,
+          type: payload.type,
+          timestamp: Date.now()
+        };
+
+        const signature = await this.generateSignature(body);
+
+        const headers = {
+          'Content-Type': 'application/json',
+          'X-SIGNATURE': signature
+        };
+
+        this.http.post(
+          `${this.API_URL}/lookupId.php`,
+          body,
+          { headers }
+        ).subscribe({
+          next: res => {
+            observer.next(res);
+            observer.complete();
+          },
+          error: err => observer.error(err)
+        });
+
+      } catch (e) {
+        observer.error(e);
+      }
+
+    })();
+
+  });
+
+}
+
 // ===============================
 // PROPERTY MANAGEMENT (SECURE FINAL)
 // ===============================
