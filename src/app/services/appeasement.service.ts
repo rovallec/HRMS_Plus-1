@@ -288,43 +288,14 @@ lookupId(payload: {
   name: string
 }) {
 
-  return new Observable(observer => {
-
-    (async () => {
-
-      try {
-
-        const body = {
-          name: payload.name,
-          timestamp: Date.now()
-        };
-
-        const signature = await this.generateSignature(body);
-
-        const headers = {
-          'Content-Type': 'application/json',
-          'X-SIGNATURE': signature
-        };
-
-        this.http.post(
-          `${this.API_URL}/lookupId.php`,
-          body,
-          { headers }
-        ).subscribe({
-          next: res => {
-            observer.next(res);
-            observer.complete();
-          },
-          error: err => observer.error(err)
-        });
-
-      } catch (e) {
-        observer.error(e);
+  return this.http.get(
+    `${this.API_URL}/lookupId.php`,
+    {
+      params: {
+        name: payload.name
       }
-
-    })();
-
-  });
+    }
+  );
 
 }
 

@@ -101,7 +101,6 @@ idSearch() {
 
       const data = res?.data?.res ?? null;
 
-      // Clear previous search values
       this.buildingId = '';
       this.tenantId = '';
 
@@ -134,7 +133,6 @@ idSearch() {
   });
 
 }
-
   // ================= PREVIEW HELPERS =================
   slice(arr: any[] = []): any[] {
     return arr ? arr.slice(0, 5) : [];

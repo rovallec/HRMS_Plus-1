@@ -2,9 +2,8 @@
 
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, X-SIGNATURE");
-header("Access-Control-Max-Age: 86400");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
 
 // =====================
@@ -29,12 +28,15 @@ error_reporting(E_ALL);
 // =====================
 $envPath = __DIR__ . '/../config/.env';
 
-
 if (!file_exists($envPath)) {
+
+    http_response_code(500);
+
     echo json_encode([
         "success" => false,
         "error" => "Missing .env"
     ]);
+
     exit;
 }
 
@@ -48,8 +50,13 @@ foreach (
 
     $line = trim($line);
 
-    if ($line === '' || substr($line, 0, 1) === '#') continue;
-    if (!str_contains($line, '=')) continue;
+    if ($line === '' || substr($line, 0, 1) === '#') {
+        continue;
+    }
+
+    if (!str_contains($line, '=')) {
+        continue;
+    }
 
     [$k, $v] = explode('=', $line, 2);
 
@@ -60,27 +67,11 @@ foreach (
 // =====================
 // INPUT
 // =====================
-$raw = file_get_contents("php://input");
-$input = json_decode($raw, true);
+$name = trim($_GET['name'] ?? '');
 
 
-if (!$input) {
-    http_response_code(400);
+if ($name === '') {
 
-    echo json_encode([
-        "success" => false,
-        "error" => "Invalid JSON"
-    ]);
-
-    exit;
-}
-
-
-$name = $input['name'] ?? null;
-$timestamp = $input['timestamp'] ?? null;
-
-
-if (!$name) {
     http_response_code(400);
 
     echo json_encode([
@@ -89,95 +80,6 @@ if (!$name) {
     ]);
 
     exit;
-}
-
-
-// =====================
-// SECURITY
-// HMAC FIXED CANONICAL STRING
-// =====================
-$secret = getenv('API_SECRET');
-
-
-$headers = getallheaders();
-
-$clientSignature =
-    $headers['X-SIGNATURE']
-    ?? $headers['x-signature']
-    ?? '';
-
-
-// EXACT SAME STRUCTURE AS ANGULAR
-$canonicalString =
-    'name=' . ($name ?? '') . '&' .
-    'timestamp=' . ($timestamp ?? '');
-
-
-$expectedSignature = base64_encode(
-    hash_hmac(
-        'sha256',
-        $canonicalString,
-        $secret,
-        true
-    )
-);
-
-
-// =====================
-// SIGNATURE VALIDATION
-// =====================
-if (!$clientSignature) {
-
-    http_response_code(401);
-
-    echo json_encode([
-        "success" => false,
-        "error" => "Missing signature"
-    ]);
-
-    exit;
-}
-
-
-if (!hash_equals($expectedSignature, $clientSignature)) {
-
-    http_response_code(401);
-
-    echo json_encode([
-        "success" => false,
-        "error" => "Unauthorized",
-        "debug_expected" => $expectedSignature,
-        "debug_received" => $clientSignature,
-        "debug_string" => $canonicalString
-    ]);
-
-    exit;
-}
-
-
-// =====================
-// ANTI REPLAY
-// =====================
-if ($timestamp) {
-
-    $maxSkew = 300000; // 5 minutes
-
-    $diff = abs(
-        (time() * 1000) - $timestamp
-    );
-
-
-    if ($diff > $maxSkew) {
-
-        http_response_code(401);
-
-        echo json_encode([
-            "success" => false,
-            "error" => "Request expired"
-        ]);
-
-        exit;
-    }
 }
 
 
@@ -210,22 +112,16 @@ try {
 
 
 // =====================
-// RESULT
-// =====================
-$row = null;
-$type = null;
-
-$searchValue = '%' . trim($name) . '%';
-
-
-// =====================
-// SEARCH BUILDING FIRST
+// SEARCH BUILDING
 // =====================
 try {
 
+    $searchValue = '%' . $name . '%';
+
     $stmt = $conn->prepare("
         SELECT TOP 1
-            zendesk_id
+            zendesk_id,
+            building_name
         FROM buildings
         WHERE building_name LIKE :name
         ORDER BY
@@ -236,18 +132,28 @@ try {
             building_name
     ");
 
-
     $stmt->execute([
         "name" => $searchValue,
-        "exactName" => trim($name)
+        "exactName" => $name
     ]);
-
 
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 
     if ($row) {
-        $type = 'building';
+
+        echo json_encode([
+            "success" => true,
+            "data" => [
+                "res" => [
+                    "id" => $row["zendesk_id"],
+                    "type" => "building",
+                    "name" => $row["building_name"]
+                ]
+            ]
+        ]);
+
+        exit;
     }
 
 } catch (Exception $e) {
@@ -256,7 +162,8 @@ try {
 
     echo json_encode([
         "success" => false,
-        "error" => "Building lookup failed"
+        "error" => "Building lookup failed",
+        "message" => $e->getMessage()
     ]);
 
     exit;
@@ -265,63 +172,55 @@ try {
 
 // =====================
 // SEARCH TENANT
-// Only if building was not found
 // =====================
-if (!$row) {
+try {
 
-    try {
+    $stmt = $conn->prepare("
+        SELECT TOP 1
+            zendesk_id,
+            dba
+        FROM tenants
+        WHERE dba LIKE :name
+        ORDER BY
+            CASE
+                WHEN dba = :exactName THEN 0
+                ELSE 1
+            END,
+            dba
+    ");
 
-        $stmt = $conn->prepare("
-            SELECT TOP 1
-                zendesk_id
-            FROM tenants
-            WHERE dba LIKE :name
-            ORDER BY
-                CASE
-                    WHEN dba = :exactName THEN 0
-                    ELSE 1
-                END,
-                dba
-        ");
+    $stmt->execute([
+        "name" => $searchValue,
+        "exactName" => $name
+    ]);
 
-
-        $stmt->execute([
-            "name" => $searchValue,
-            "exactName" => trim($name)
-        ]);
-
-
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 
-        if ($row) {
-            $type = 'tenant';
-        }
-
-    } catch (Exception $e) {
-
-        http_response_code(500);
+    if ($row) {
 
         echo json_encode([
-            "success" => false,
-            "error" => "Tenant lookup failed"
+            "success" => true,
+            "data" => [
+                "res" => [
+                    "id" => $row["zendesk_id"],
+                    "type" => "tenant",
+                    "name" => $row["dba"]
+                ]
+            ]
         ]);
 
         exit;
     }
-}
 
+} catch (Exception $e) {
 
-// =====================
-// NOT FOUND
-// =====================
-if (!$row) {
+    http_response_code(500);
 
     echo json_encode([
-        "success" => true,
-        "data" => [
-            "res" => null
-        ]
+        "success" => false,
+        "error" => "Tenant lookup failed",
+        "message" => $e->getMessage()
     ]);
 
     exit;
@@ -329,14 +228,11 @@ if (!$row) {
 
 
 // =====================
-// RESPONSE
+// NOT FOUND
 // =====================
 echo json_encode([
     "success" => true,
     "data" => [
-        "res" => [
-            "id" => $row["zendesk_id"],
-            "type" => $type
-        ]
+        "res" => null
     ]
 ]);
