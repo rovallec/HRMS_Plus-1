@@ -6,10 +6,10 @@
 
     <div class="search-container">
 
-    <input class="search-input" type="text" [(ngModel)]="searchBuildingAndTenant" (keyup.enter)="idSearch(searchBuildingAndTenant)"
+    <input class="search-input" type="text" [(ngModel)]="searchBuildingAndTenant" (keyup.enter)="idSearch()"
       placeholder="Search property information..." />
 
-    <button class="search-btn" (click)="idSearch(searchBuildingAndTenant)">
+    <button class="search-btn" (click)="idSearch()">
 
       <i class="bi bi-search"></i>
       Search
